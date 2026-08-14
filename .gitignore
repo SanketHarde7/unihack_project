@@ -1,3 +1,4 @@
 .env
 HANDOFF.md
 implementation_plan2.md
+.gitignore
