@@ -2,3 +2,4 @@
 HANDOFF.md
 implementation_plan2.md
 .gitignore
+src/__pycache__
