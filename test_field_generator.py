@@ -20,7 +20,7 @@ from pathlib import Path
 # Add src to path so we can import field_generator
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from field_generator import (
+from src.field_generator import (
     GenerationResult,
     _build_invoice_desc,
     _build_long_desc1,
@@ -33,8 +33,8 @@ from field_generator import (
     ATTRIBUTE_LABELS,
     generate_fields,
 )
-from brand_resolver import BrandResolution
-from web_research import ResearchResult
+from src.brand_resolver import BrandResolution
+from src.web_research import ResearchResult
 
 
 # ---------------------------------------------------------------------------
