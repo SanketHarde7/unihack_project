@@ -3,3 +3,5 @@ HANDOFF.md
 implementation_plan2.md
 .gitignore
 src/__pycache__
+test_real_extraction.py
+test_field_generator.py
