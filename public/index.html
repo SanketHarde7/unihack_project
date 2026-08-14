@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniHack AI — Enterprise Catalog Enrichment Platform</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient background glows -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
+
+  <div class="app-container">
+    <!-- Navbar / Header -->
+    <header class="navbar glass-card">
+      <div class="brand-group">
+        <div class="brand-icon">
+          <i class="fa-solid fa-layer-group"></i>
+        </div>
+        <div class="brand-text">
+          <h1>UniHack <span>EnrichAI</span></h1>
+          <p class="subtitle">Autonomous 252-Column Enterprise Product Catalog Enrichment</p>
+        </div>
+      </div>
+      <div class="system-status">
+        <div class="status-pill" id="backend-status">
+          <span class="status-dot online"></span>
+          <span class="status-label">Backend: <strong id="api-status-text">Connected</strong></span>
+        </div>
+        <div class="status-pill">
+          <span class="status-dot online"></span>
+          <span>Sourcing: <strong>Official Domains</strong></span>
+        </div>
+        <div class="status-pill">
+          <span class="status-dot online"></span>
+          <span>Schema: <strong>252 Columns</strong></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace Grid -->
+    <main class="workspace-grid">
+      <!-- Left Column: Input & Pipeline Control -->
+      <section class="input-section glass-card">
+        <div class="section-header">
+          <div class="title-with-icon">
+            <i class="fa-solid fa-bolt-lightning text-accent"></i>
+            <h2>Product Input Studio</h2>
+          </div>
+          <span class="badge-hint">Raw Distributor Stream</span>
+        </div>
+
+        <!-- Presets Bar -->
+        <div class="presets-container">
+          <label class="input-label">🚀 Fast Benchmark Presets (Sample Dataset):</label>
+          <div class="preset-buttons-grid">
+            <button class="preset-btn active" data-mpn="PDSH4816AF" data-brand="Frigidaire" data-desc="PDSH4816AF Dishwasher SS - Display Only">
+              <span class="preset-brand">Frigidaire</span>
+              <span class="preset-mpn">PDSH4816AF</span>
+            </button>
+            <button class="preset-btn" data-mpn="WDTS7024RZ" data-brand="Whirlpool" data-desc="WDTS7024RZ Dishwasher SS - Display Only">
+              <span class="preset-brand">Whirlpool</span>
+              <span class="preset-mpn">WDTS7024RZ</span>
+            </button>
+            <button class="preset-btn" data-mpn="KDFM404KPS" data-brand="KitchenAid" data-desc="KDFM404KPS Dishwasher SS">
+              <span class="preset-brand">KitchenAid</span>
+              <span class="preset-mpn">KDFM404KPS</span>
+            </button>
+            <button class="preset-btn" data-mpn="PDT715SYVFS" data-brand="GE" data-desc="PDT715SYVFS Ge Dishwasher SS">
+              <span class="preset-brand">GE Profile</span>
+              <span class="preset-mpn">PDT715SYVFS</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Input Form -->
+        <form id="enrich-form" class="enrich-form">
+          <div class="form-group">
+            <label for="mpn-input" class="input-label">Manufacturer Part Number (MPN) <span class="required">*</span></label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-barcode input-icon"></i>
+              <input type="text" id="mpn-input" name="mpn" value="PDSH4816AF" placeholder="e.g. PDSH4816AF, WDTS7024RZ" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="desc-input" class="input-label">Raw Description (Cryptic Supplier String)</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-file-lines input-icon"></i>
+              <input type="text" id="desc-input" name="description" value="PDSH4816AF Dishwasher SS - Display Only" placeholder="e.g. PDSH4816AF Dishwasher SS">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="distributor-input" class="input-label">Distributor / Supplier</label>
+              <input type="text" id="distributor-input" name="distributor" value="Appliance Dealers Cooperative (APPDE)">
+            </div>
+            <div class="form-group flex-center-checkbox">
+              <label class="checkbox-container">
+                <input type="checkbox" id="refresh-checkbox">
+                <span class="checkmark"></span>
+                <span class="checkbox-label">Bypass Cache (Live Scraping)</span>
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" id="enrich-btn" class="primary-btn">
+            <span class="btn-text"><i class="fa-solid fa-wand-magic-sparkles"></i> Enrich Master Product Record</span>
+            <div class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i> Processing...</div>
+          </button>
+        </form>
+
+        <!-- Live 5-Stage Visual Stepper -->
+        <div class="pipeline-stepper-box">
+          <h3><i class="fa-solid fa-diagram-project"></i> Live Pipeline Engine Tracker</h3>
+          <div class="stepper">
+            <div class="step-item" id="step-1">
+              <div class="step-circle"><i class="fa-solid fa-tag"></i></div>
+              <div class="step-content">
+                <strong>Stage 1: Brand Resolver</strong>
+                <span>Entity resolution & MPN prefix lookup</span>
+              </div>
+              <div class="step-status"><i class="fa-solid fa-clock"></i></div>
+            </div>
+
+            <div class="step-item" id="step-2">
+              <div class="step-circle"><i class="fa-solid fa-globe"></i></div>
+              <div class="step-content">
+                <strong>Stage 2: Web Research Agent</strong>
+                <span>Domain-locked official spec discovery</span>
+              </div>
+              <div class="step-status"><i class="fa-solid fa-clock"></i></div>
+            </div>
+
+            <div class="step-item" id="step-3">
+              <div class="step-circle"><i class="fa-solid fa-microchip"></i></div>
+              <div class="step-content">
+                <strong>Stage 3: Field Generator</strong>
+                <span>Groq LLM (temp=0) + dynamic description synthesis</span>
+              </div>
+              <div class="step-status"><i class="fa-solid fa-clock"></i></div>
+            </div>
+
+            <div class="step-item" id="step-4">
+              <div class="step-circle"><i class="fa-solid fa-shield-halved"></i></div>
+              <div class="step-content">
+                <strong>Stage 4: PIM Quality Validator</strong>
+                <span>Char-limit checks & 5-factor scoring</span>
+              </div>
+              <div class="step-status"><i class="fa-solid fa-clock"></i></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Results & Enriched Output -->
+      <section class="results-section">
+        <!-- Top Metrics Cards -->
+        <div class="metrics-row">
+          <!-- Confidence Gauge Card -->
+          <div class="metric-card glass-card">
+            <div class="metric-header">
+              <h3>Overall Quality Score</h3>
+              <span class="conf-badge badge-high" id="conf-badge">HIGH</span>
+            </div>
+            <div class="gauge-container">
+              <div class="circular-progress" id="progress-circle">
+                <div class="progress-value" id="score-text">85%</div>
+              </div>
+              <div class="score-factors">
+                <div class="factor-row">
+                  <span>Brand Identity (20%)</span>
+                  <div class="bar-track"><div class="bar-fill" id="bar-brand" style="width: 100%"></div></div>
+                </div>
+                <div class="factor-row">
+                  <span>Sourcing Truth (20%)</span>
+                  <div class="bar-track"><div class="bar-fill" id="bar-source" style="width: 100%"></div></div>
+                </div>
+                <div class="factor-row">
+                  <span>Attributes Filled (30%)</span>
+                  <div class="bar-track"><div class="bar-fill" id="bar-attr" style="width: 70%"></div></div>
+                </div>
+                <div class="factor-row">
+                  <span>Rule Compliance (20%)</span>
+                  <div class="bar-track"><div class="bar-fill" id="bar-desc" style="width: 100%"></div></div>
+                </div>
+                <div class="factor-row">
+                  <span>Digital Assets (10%)</span>
+                  <div class="bar-track"><div class="bar-fill" id="bar-asset" style="width: 100%"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Identity Card -->
+          <div class="metric-card glass-card">
+            <div class="metric-header">
+              <h3>Canonical Entity Master</h3>
+              <span class="badge-source" id="cache-badge"><i class="fa-solid fa-database"></i> Cache Hit</span>
+            </div>
+            <div class="entity-details-grid">
+              <div class="entity-item">
+                <label>Canonical Brand</label>
+                <strong id="entity-brand">FRIGIDAIRE®</strong>
+              </div>
+              <div class="entity-item">
+                <label>Legal Manufacturer</label>
+                <strong id="entity-mfr">Rheem Manufacturing</strong>
+              </div>
+              <div class="entity-item">
+                <label>Taxonomy Classpath</label>
+                <span class="mono-text" id="entity-classpath">Appliances &gt; Kitchen &gt; Built-In Dishwashers</span>
+              </div>
+              <div class="entity-item">
+                <label>Manufacturer Citation URL</label>
+                <a href="#" target="_blank" id="entity-url" class="link-url"><i class="fa-solid fa-arrow-up-right-from-square"></i> <span id="entity-url-text">frigidaire.com/spec-sheet</span></a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5 Tailored Description Formats Tabbed Card -->
+        <div class="descriptions-card glass-card">
+          <div class="desc-header">
+            <div class="title-with-icon">
+              <i class="fa-solid fa-file-pen text-accent"></i>
+              <h3>5 Commerce-Ready Description Formats</h3>
+            </div>
+            <div class="desc-tabs">
+              <button class="desc-tab active" data-tab="invoice">INVOICE_DESC (POS)</button>
+              <button class="desc-tab" data-tab="mobile">MOBILE_DESC</button>
+              <button class="desc-tab" data-tab="short">SHORT_DESC</button>
+              <button class="desc-tab" data-tab="long">LONG_DESC1</button>
+              <button class="desc-tab" data-tab="retail">RETAIL_DESC</button>
+            </div>
+          </div>
+
+          <div class="desc-content-box">
+            <div class="desc-info-bar">
+              <span class="desc-guideline" id="desc-guideline">Constraint: &le; 40 characters, uppercase alphanumeric greedy priority-join.</span>
+              <span class="char-pill pill-success" id="char-pill">38 / 40 chars</span>
+            </div>
+            <div class="desc-text-output" id="desc-text-output">
+              DISHWASHER LEG 5 SST 120V 15A 50-1/4IN
+            </div>
+          </div>
+        </div>
+
+        <!-- 15 Technical Attribute Slots Grid -->
+        <div class="attributes-card glass-card">
+          <div class="section-header">
+            <div class="title-with-icon">
+              <i class="fa-solid fa-list-check text-accent"></i>
+              <h3>15 Standardized Technical Attributes</h3>
+            </div>
+            <div class="provenance-legend">
+              <span class="legend-tag research"><i class="fa-solid fa-circle-check"></i> Research</span>
+              <span class="legend-tag derived"><i class="fa-solid fa-code-fork"></i> Derived</span>
+              <span class="legend-tag needs-review"><i class="fa-solid fa-flag"></i> Needs Review</span>
+            </div>
+          </div>
+
+          <div class="attributes-grid" id="attributes-grid">
+            <!-- Dynamically populated 15 slots -->
+          </div>
+        </div>
+
+        <!-- Master 252-Column Data Grid & Exporter Hub -->
+        <div class="export-hub-card glass-card">
+          <div class="export-header">
+            <div class="title-with-icon">
+              <i class="fa-solid fa-table-cells text-accent"></i>
+              <h3>Master 252-Column Record Viewer</h3>
+            </div>
+            <div class="export-actions">
+              <button id="download-csv-btn" class="secondary-btn">
+                <i class="fa-solid fa-file-csv"></i> Download Delivery CSV (252 Cols)
+              </button>
+              <button id="download-json-btn" class="secondary-btn">
+                <i class="fa-solid fa-code"></i> Download Audit JSON
+              </button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="master-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Field / Column Header</th>
+                  <th>Enriched Value</th>
+                  <th>Provenance / Source</th>
+                </tr>
+              </thead>
+              <tbody id="master-table-body">
+                <!-- Dynamically populated 252 rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

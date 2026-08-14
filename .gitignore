@@ -1,7 +1,32 @@
+# Environment variables and secrets
 .env
+*.env
+.env.*
+
+# Python caches and bytecode
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+
+# Local test scripts & scratch files
+test_*.py
+scratch_*.py
+scratch/
+browser/
+
+# Local databases and runtime cache
+output/*.db
+output/catalog.db
+output/catalog_cache.json
+
+# Planning and handoff scratch docs
 HANDOFF.md
 implementation_plan2.md
-.gitignore
-src/__pycache__
-test_real_extraction.py
-test_field_generator.py
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

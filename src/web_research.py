@@ -1,26 +1,19 @@
 """
-Stage 2: Web Research Agent
-----------------------------
+Stage 2: Web Research Agent (Enhanced with Anti-Noise & Sourcing Compliance)
+----------------------------------------------------------------------------
 Root problem: we only have MPN + a 3-4 word cryptic description. To build an
 accurate, rich product record we need real specs (dimensions, voltage, sound
 level, capacity etc.) - these must come from the MANUFACTURER'S OWN OFFICIAL
 SITE, per the hackathon sourcing rule (marketplaces/distributor sites are
 explicitly disallowed).
 
-Design decisions (with reasons, not guesses):
-  - Tavily search is scoped with `include_domains` to the resolved brand's
-    known official domain, so we never accidentally cite a reseller/marketplace.
-  - MULTI-QUERY STRATEGY: We fire 2-3 targeted queries per MPN to maximise
-    coverage (specs page, installation/PDF, spec-sheet PDF). Tavily snippets
-    alone are too truncated for deep specs like voltage/amperage/dimensions.
-  - FULL-PAGE FETCH: After Tavily gives us URLs, we fetch the full page HTML
-    via requests and extract text, so the LLM sees the complete spec table
-    instead of a 200-char snippet.
-  - Each result is returned RAW with its source URL attached - Stage 3 (field
-    generation) must cite what it used, and Stage 4 (validator) checks the
-    domain is actually the official one. No silent trust.
-  - If no official-domain result is found, we return an explicit "not_found"
-    status rather than falling back to an unrestricted search.
+Enterprise Upgrades:
+  1. Multi-Query Strategy: 3 targeted queries (specs, install dimensions, spec-sheet PDF).
+  2. Anti-Noise Filtering: Discards or deprioritizes troubleshooting articles, blogs,
+     and registration pages to preserve token budget for real spec sheets.
+  3. Spec-Priority Ranking: Surfaces URLs with /specifications, /spec-sheet, /products/, .pdf.
+  4. Bot-Block Fallback: If direct requests encounters a 403/Forbidden, gracefully
+     falls back to Tavily's pre-rendered content rather than losing the citation.
 """
 
 from __future__ import annotations
@@ -36,9 +29,8 @@ from tavily import TavilyClient
 
 load_dotenv()
 
-# Known official domains per brand. Extend this as we verify more brands.
-# Kept explicit (not auto-guessed) because sourcing-rule compliance depends
-# on this being correct.
+# Known official domains per brand. Sourcing-rule compliance strictly depends
+# on domain locking.
 BRAND_OFFICIAL_DOMAINS: dict[str, list[str]] = {
     "GE": ["geappliances.com"],
     "LG": ["lg.com"],
@@ -50,6 +42,33 @@ BRAND_OFFICIAL_DOMAINS: dict[str, list[str]] = {
     "Samsung": ["samsung.com"],
     "Bosch": ["bosch-home.com"],
 }
+
+# URL noise patterns to filter out (troubleshooting, registration, generic blogs)
+URL_BLACKLIST_PATTERNS = [
+    "/support-articles/",
+    "/article/",
+    "/registration/",
+    "/blog/",
+    "/help/",
+    "/community/",
+    "/forum/",
+    "/where-to-buy/",
+    "/find-a-store/",
+    "/contact-us",
+]
+
+# URL positive signals for specification data
+URL_PRIORITY_PATTERNS = [
+    "/specifications",
+    "/spec-sheet",
+    "/specs",
+    "/products/",
+    "/dishwashers/",
+    "/kitchen/",
+    "/manuals",
+    "/installation",
+    ".pdf",
+]
 
 
 @dataclass
@@ -67,7 +86,7 @@ class ResearchResult:
 # ---------------------------------------------------------------------------
 
 class _HTMLTextExtractor(HTMLParser):
-    """Strips HTML tags and extracts readable text content."""
+    """Strips HTML tags and extracts readable text content with whitespace collapse."""
 
     _SKIP_TAGS = frozenset({
         "script", "style", "noscript", "svg", "path", "meta", "link",
@@ -93,22 +112,21 @@ class _HTMLTextExtractor(HTMLParser):
 
     def get_text(self) -> str:
         raw = " ".join(self._pieces)
-        # Collapse whitespace runs
         return re.sub(r"\s+", " ", raw).strip()
 
 
 def _html_to_text(html: str) -> str:
-    """Convert HTML to plain text, stripping tags and scripts."""
+    """Convert HTML to clean plain text."""
     extractor = _HTMLTextExtractor()
     try:
         extractor.feed(html)
     except Exception:
-        return html  # Fallback: return raw if parsing fails
+        return html
     return extractor.get_text()
 
 
 # ---------------------------------------------------------------------------
-# Full-page content fetcher
+# Full-page content fetcher (with bot-block fallback)
 # ---------------------------------------------------------------------------
 
 _FETCH_HEADERS = {
@@ -120,17 +138,11 @@ _FETCH_HEADERS = {
     "Accept-Language": "en-US,en;q=0.5",
 }
 
-# Max bytes to download per page (prevent OOM on huge PDFs)
-_MAX_PAGE_BYTES = 500_000  # 500 KB of text is plenty for spec extraction
+_MAX_PAGE_BYTES = 500_000
 
 
 def _fetch_full_page(url: str, timeout: int = 10) -> str:
-    """Fetch the full page content from a URL and return as plain text.
-
-    For HTML pages, strips tags and returns readable text.
-    For PDFs, returns what we can get (often the first chunk of text).
-    Returns empty string on any failure (network, timeout, etc.).
-    """
+    """Fetch full page content. Returns plain text, or empty string on failure."""
     try:
         resp = requests.get(
             url,
@@ -143,7 +155,6 @@ def _fetch_full_page(url: str, timeout: int = 10) -> str:
 
         content_type = resp.headers.get("Content-Type", "")
 
-        # Read up to _MAX_PAGE_BYTES
         chunks = []
         total = 0
         for chunk in resp.iter_content(chunk_size=8192, decode_unicode=True):
@@ -157,46 +168,56 @@ def _fetch_full_page(url: str, timeout: int = 10) -> str:
 
         raw = "".join(chunks)
 
-        # If it looks like HTML, strip tags
         if "html" in content_type.lower() or raw.strip().startswith("<"):
             return _html_to_text(raw)
 
-        # Otherwise return as-is (could be plain text or PDF text)
         return raw[:_MAX_PAGE_BYTES]
 
     except Exception as exc:
-        print(f"  WARN: Failed to fetch {url}: {exc}")
+        print(f"    [Fallback to snippet] {url} ({exc})")
         return ""
 
 
 # ---------------------------------------------------------------------------
-# Multi-query search strategy
+# Multi-query & URL Ranking
 # ---------------------------------------------------------------------------
 
 def _build_queries(mpn: str, brand: str, product_type: str) -> list[str]:
-    """Build 3 targeted queries for maximum spec coverage."""
+    """Targeted search queries for deep spec discovery."""
     return [
-        # Query 1: Direct specs page
         f"{brand} {mpn} specifications",
-        # Query 2: Installation/dimension data (often in install guides/PDFs)
         f"{brand} {mpn} installation guide dimensions",
-        # Query 3: Spec sheet / data sheet (often has voltage/amperage/sound)
-        f"{brand} {mpn} spec sheet product details",
+        f"{brand} {mpn} spec sheet PDF",
     ]
+
+
+def _score_url(url: str) -> int:
+    """Score a URL based on relevance to specs. Higher is better."""
+    url_lower = url.lower()
+
+    # Heavy penalty for noise/support/blog pages
+    for blacklisted in URL_BLACKLIST_PATTERNS:
+        if blacklisted in url_lower:
+            return -10
+
+    score = 0
+    for priority in URL_PRIORITY_PATTERNS:
+        if priority in url_lower:
+            score += 5
+
+    return score
 
 
 def research_product(mpn: str, brand: str, product_type: str = "dishwasher") -> ResearchResult:
     """Search the brand's official domain for this MPN's specs.
 
-    Uses multi-query strategy (3 targeted queries) and fetches full page
-    content from discovered URLs for maximum data extraction.
+    Uses anti-noise ranking and multi-query search to prioritize official spec sheets.
     """
-
     domains = BRAND_OFFICIAL_DOMAINS.get(brand)
     if not domains:
         return ResearchResult(
             mpn=mpn, brand=brand, status="error",
-            raw_answer=f"No official domain registered for brand '{brand}'. Add it to BRAND_OFFICIAL_DOMAINS first.",
+            raw_answer=f"No official domain registered for brand '{brand}'.",
         )
 
     api_key = os.getenv("TAVILY_API_KEY")
@@ -209,9 +230,8 @@ def research_product(mpn: str, brand: str, product_type: str = "dishwasher") -> 
     client = TavilyClient(api_key=api_key)
     queries = _build_queries(mpn, brand, product_type)
 
-    # Deduplicate URLs across queries
     seen_urls: set[str] = set()
-    all_sources: list[dict] = []
+    raw_sources: list[dict] = []
     raw_answers: list[str] = []
 
     for query in queries:
@@ -235,31 +255,40 @@ def research_product(mpn: str, brand: str, product_type: str = "dishwasher") -> 
             if url in seen_urls:
                 continue
             seen_urls.add(url)
-            all_sources.append({
+            raw_sources.append({
                 "url": url,
                 "content": r.get("content", ""),
+                "score": _score_url(url),
                 "query": query,
             })
 
-    if not all_sources:
+    if not raw_sources:
         return ResearchResult(
             mpn=mpn, brand=brand, status="not_found",
             query=" | ".join(queries),
             raw_answer="No results on official domain across all queries - flag for manual review.",
         )
 
-    # --- Full-page fetch for top URLs ---
-    # Fetch full content for up to 5 unique URLs (most relevant first)
-    print(f"  Fetching full page content for {min(len(all_sources), 5)} URLs...")
-    for source in all_sources[:5]:
+    # Sort sources: High-relevance spec pages first, deprioritize support/noise
+    sorted_sources = sorted(raw_sources, key=lambda s: s["score"], reverse=True)
+
+    # Filter out negative-scored URLs if we have at least 2 clean ones
+    clean_sources = [s for s in sorted_sources if s["score"] >= 0]
+    if len(clean_sources) >= 2:
+        selected_sources = clean_sources
+    else:
+        selected_sources = sorted_sources
+
+    # Fetch full page content for top 5 unique relevant URLs
+    print(f"  Fetching full content for top {min(len(selected_sources), 5)} prioritized URLs...")
+    for source in selected_sources[:5]:
         url = source["url"]
         full_text = _fetch_full_page(url)
         if full_text and len(full_text) > len(source["content"]):
-            # Replace Tavily snippet with full page text
             source["content"] = full_text
             print(f"    OK: {url} ({len(full_text)} chars)")
         else:
-            print(f"    SKIP: {url} (snippet kept, {len(source['content'])} chars)")
+            print(f"    Kept snippet: {url} ({len(source['content'])} chars)")
 
     combined_query = " | ".join(queries)
     combined_answer = "\n\n".join(raw_answers) if raw_answers else ""
@@ -267,21 +296,17 @@ def research_product(mpn: str, brand: str, product_type: str = "dishwasher") -> 
     return ResearchResult(
         mpn=mpn, brand=brand, status="found",
         query=combined_query,
-        sources=all_sources,
+        sources=selected_sources,
         raw_answer=combined_answer,
     )
 
 
 if __name__ == "__main__":
-    # Quick smoke test on the two ground-truth items
     for mpn, brand in [("PDSH4816AF", "Frigidaire"), ("WDTS7024RZ", "Whirlpool")]:
         result = research_product(mpn, brand)
         print(f"\n=== {mpn} ({brand}) ===")
         print("status:", result.status)
-        print("queries:", result.query)
         if result.status == "found":
             print(f"sources: {len(result.sources)} unique URLs")
             for s in result.sources[:3]:
-                print(f"  - {s['url']} ({len(s['content'])} chars)")
-        else:
-            print("note:", result.raw_answer)
+                print(f"  - [Score {s['score']}] {s['url']} ({len(s['content'])} chars)")

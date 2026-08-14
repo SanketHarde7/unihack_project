@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-08-14 18:52:54",
+  "total_items_processed": 1,
+  "execution_time_seconds": 24.29,
+  "high_confidence_count": 0,
+  "medium_confidence_count": 1,
+  "low_confidence_count": 0,
+  "valid_records_count": 1,
+  "delivery_csv_path": "C:\\Users\\sanke\\OneDrive\\Desktop\\unihack\\output\\Unihack_Enriched_Catalog_Delivery.csv",
+  "total_columns": 252,
+  "items": [
+    {
+      "mpn": "PDSH4816AF",
+      "description": "PDSH4816AF Dishwasher SS - Display Only",
+      "resolved_brand": "Frigidaire",
+      "brand_confidence": "medium",
+      "research_status": "found",
+      "sources_count": 6,
+      "sources": [
+        "https://owner.frigidaire.com/support-articles/article/delivery-check-list-dishwasher",
+        "https://owner.frigidaire.com/support-articles/article/1819543-dishwasher-not-drying",
+        "https://owner.frigidaire.com/support-articles/article/1829620-dishwasher-error-code-guide",
+        "https://owner.frigidaire.com/support-articles/article/1852996-what-should-i-do-if-my-dishwasher-is-not-starting-",
+        "https://owner.frigidaire.com/support-articles/article/1847427-dishwashers-how-do-i-start-my-dishwasher-",
+        "https://owner.frigidaire.com/support-articles/article/1852990-what-can-i-do-if-my-dishwasher-is-not-draining-"
+      ],
+      "validation": {
+        "is_valid": true,
+        "confidence": "MEDIUM",
+        "confidence_score": 0.64,
+        "score_breakdown": {
+          "brand_resolution": 0.6,
+          "source_verification": 1.0,
+          "attribute_completeness": 0.06666666666666667,
+          "description_compliance": 1.0,
+          "digital_assets": 1.0
+        },
+        "issues": [
+          {
+            "field": "MOBILE_DESC",
+            "issue_type": "warning",
+            "message": "Length 54 is under 60 chars target",
+            "rule_code": "RULE_DESC_07"
+          }
+        ],
+        "needs_review_fields": [
+          "ATTRIBUTE_VALUE 1",
+          "ATTRIBUTE_VALUE 10",
+          "ATTRIBUTE_VALUE 11",
+          "ATTRIBUTE_VALUE 12",
+          "ATTRIBUTE_VALUE 13",
+          "ATTRIBUTE_VALUE 14",
+          "ATTRIBUTE_VALUE 2",
+          "ATTRIBUTE_VALUE 3",
+          "ATTRIBUTE_VALUE 4",
+          "ATTRIBUTE_VALUE 5",
+          "ATTRIBUTE_VALUE 6",
+          "ATTRIBUTE_VALUE 7",
+          "ATTRIBUTE_VALUE 8",
+          "ATTRIBUTE_VALUE 9",
+          "amperage_uom",
+          "depth_uom",
+          "marketing_description",
+          "max_height_uom",
+          "min_height_uom",
+          "sound_uom",
+          "standards_approvals",
+          "voltage_uom",
+          "warranty",
+          "with_text"
+        ]
+      },
+      "field_provenance_summary": {
+        "constant": 21,
+        "input": 7,
+        "research": 12,
+        "derived": 7,
+        "empty": 205
+      }
+    }
+  ]
+}

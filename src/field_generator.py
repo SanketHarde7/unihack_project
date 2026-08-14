@@ -397,17 +397,17 @@ Return ONLY a valid JSON object with exactly these keys:
         {"role": "user", "content": user_msg},
     ]
 
-def _normalize_specs(specs: dict) -> dict:
+def _normalize_specs(specs: dict, brand_fallback: str = "") -> dict:
     """Apply deterministic post-LLM normalization to fix known formatting issues.
 
     This is a free accuracy boost — no API calls, no LLM, just pattern matching:
-    1. Brand name → canonical form with ® symbol
+    1. Brand name → canonical form with ® symbol (using brand_fallback if LLM missed it)
     2. Manufacturer name → canonical legal name
     3. Series → ensure it ends with "Series" if it doesn't already
     4. Mounting type → normalize casing ("Built-In" → "Built-in")
     """
     # --- Brand & Manufacturer normalization ---
-    brand_raw = specs.get("brand_name", "")
+    brand_raw = specs.get("brand_name", "") or brand_fallback
     # Strip ® ™ and lowercase for lookup
     brand_key = (
         brand_raw
@@ -423,8 +423,10 @@ def _normalize_specs(specs: dict) -> dict:
         # Only override manufacturer if LLM left it empty or returned the brand
         if not specs.get("manufacturer_name") or specs["manufacturer_name"].lower() == brand_key:
             specs["manufacturer_name"] = canonical["manufacturer_name"]
-        # Remove manufacturer_name from not_found if we just filled it
+        # Remove brand & manufacturer from not_found if we just populated them
         nf = specs.get("not_found_fields", [])
+        if "brand_name" in nf:
+            nf.remove("brand_name")
         if "manufacturer_name" in nf:
             nf.remove("manufacturer_name")
 
@@ -493,7 +495,7 @@ def _extract_specs_via_llm(research: ResearchResult) -> dict | None:
         )
         raw = response.choices[0].message.content
         specs = json.loads(raw)
-        return _normalize_specs(specs)
+        return _normalize_specs(specs, brand_fallback=research.brand)
 
     except json.JSONDecodeError as exc:
         print(f"WARNING: LLM returned invalid JSON for {research.mpn}: {exc}")
@@ -810,6 +812,21 @@ def generate_fields(
         field_sources["BRAND_NAME"] = "research"
     else:
         needs_review.append("BRAND_NAME")
+
+    # If web research didn't extract brand/mfr, fall back to Stage 1 resolved brand
+    brand_key = (brand_resolution.brand or "").strip().lower()
+    canonical = CANONICAL_BRAND_NAMES.get(brand_key)
+    if (not fields.get("BRAND_NAME") or fields.get("BRAND_NAME") == "") and canonical:
+        fields["BRAND_NAME"] = canonical["brand_name"]
+        field_sources["BRAND_NAME"] = "derived"
+        if "BRAND_NAME" in needs_review:
+            needs_review.remove("BRAND_NAME")
+
+    if (not fields.get("MANUFACTURER_NAME") or fields.get("MANUFACTURER_NAME") == "") and canonical:
+        fields["MANUFACTURER_NAME"] = canonical["manufacturer_name"]
+        field_sources["MANUFACTURER_NAME"] = "derived"
+        if "MANUFACTURER_NAME" in needs_review:
+            needs_review.remove("MANUFACTURER_NAME")
 
     # — Attribute values & UOMs (slots 1-15) —
     for i, label in enumerate(ATTRIBUTE_LABELS, start=1):
