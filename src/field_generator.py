@@ -117,6 +117,49 @@ INVOICE_ABBREV: dict[str, str] = {
     "Fingerprint Resistant Stainless Steel": "FRSS",
 }
 
+# Canonical brand names with exact trademark symbols.
+# Applied deterministically AFTER LLM extraction to fix formatting
+# mismatches (e.g. "Frigidaire" → "FRIGIDAIRE®") — no LLM needed.
+CANONICAL_BRAND_NAMES: dict[str, dict[str, str]] = {
+    # key = lowercase brand → {brand_name, manufacturer_name}
+    "frigidaire": {
+        "brand_name": "FRIGIDAIRE\u00ae",
+        "manufacturer_name": "Rheem Manufacturing",
+    },
+    "whirlpool": {
+        "brand_name": "Whirlpool\u00ae",
+        "manufacturer_name": "Whirlpool Corporation",
+    },
+    "ge": {
+        "brand_name": "GE\u00ae",
+        "manufacturer_name": "GE Appliances",
+    },
+    "lg": {
+        "brand_name": "LG\u00ae",
+        "manufacturer_name": "LG Electronics",
+    },
+    "kitchenaid": {
+        "brand_name": "KitchenAid\u00ae",
+        "manufacturer_name": "Whirlpool Corporation",
+    },
+    "maytag": {
+        "brand_name": "Maytag\u00ae",
+        "manufacturer_name": "Whirlpool Corporation",
+    },
+    "samsung": {
+        "brand_name": "Samsung\u00ae",
+        "manufacturer_name": "Samsung Electronics",
+    },
+    "bosch": {
+        "brand_name": "Bosch\u00ae",
+        "manufacturer_name": "BSH Home Appliances",
+    },
+    "speed queen": {
+        "brand_name": "Speed Queen\u00ae",
+        "manufacturer_name": "Alliance Laundry Systems",
+    },
+}
+
 # Per-attribute formatters for LONG_DESC1.
 # Each takes (value, uom) and returns the display string.
 LONG_DESC_FORMATTERS: dict[str, object] = {
@@ -354,6 +397,56 @@ Return ONLY a valid JSON object with exactly these keys:
         {"role": "user", "content": user_msg},
     ]
 
+def _normalize_specs(specs: dict) -> dict:
+    """Apply deterministic post-LLM normalization to fix known formatting issues.
+
+    This is a free accuracy boost — no API calls, no LLM, just pattern matching:
+    1. Brand name → canonical form with ® symbol
+    2. Manufacturer name → canonical legal name
+    3. Series → ensure it ends with "Series" if it doesn't already
+    4. Mounting type → normalize casing ("Built-In" → "Built-in")
+    """
+    # --- Brand & Manufacturer normalization ---
+    brand_raw = specs.get("brand_name", "")
+    # Strip ® ™ and lowercase for lookup
+    brand_key = (
+        brand_raw
+        .replace("\u00ae", "")
+        .replace("\u2122", "")
+        .strip()
+        .lower()
+    )
+
+    canonical = CANONICAL_BRAND_NAMES.get(brand_key)
+    if canonical:
+        specs["brand_name"] = canonical["brand_name"]
+        # Only override manufacturer if LLM left it empty or returned the brand
+        if not specs.get("manufacturer_name") or specs["manufacturer_name"].lower() == brand_key:
+            specs["manufacturer_name"] = canonical["manufacturer_name"]
+        # Remove manufacturer_name from not_found if we just filled it
+        nf = specs.get("not_found_fields", [])
+        if "manufacturer_name" in nf:
+            nf.remove("manufacturer_name")
+
+    # --- Series suffix normalization ---
+    series = specs.get("series", "")
+    if series and not series.lower().endswith("series"):
+        specs["series"] = f"{series} Series"
+
+    # --- Mounting type casing normalization ---
+    mounting = specs.get("mounting_type", "")
+    mounting_map = {
+        "built-in": "Built-in",
+        "built in": "Built-in",
+        "builtin": "Built-in",
+        "leg": "Leg",
+        "freestanding": "Freestanding",
+    }
+    if mounting.lower() in mounting_map:
+        specs["mounting_type"] = mounting_map[mounting.lower()]
+
+    return specs
+
 
 def _extract_specs_via_llm(research: ResearchResult) -> dict | None:
     """Call Groq LLM to extract structured specs from research text.
@@ -374,6 +467,12 @@ def _extract_specs_via_llm(research: ResearchResult) -> dict | None:
         parts.append(f"\nSource: {source['url']}\n{source['content']}")
     research_text = "\n".join(parts)
 
+    # Groq free tier has an 8000 TPM limit. 
+    # ~12,000 chars is roughly 3000 tokens, safely allowing 2 requests per minute.
+    if len(research_text) > 12000:
+        print(f"  WARN: Truncating research text from {len(research_text)} to 12000 chars")
+        research_text = research_text[:12000] + "\n...[TRUNCATED TO AVOID RATE LIMITS]"
+
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         print("WARNING: GROQ_API_KEY not set — skipping LLM extraction")
@@ -393,7 +492,8 @@ def _extract_specs_via_llm(research: ResearchResult) -> dict | None:
             max_completion_tokens=4096,
         )
         raw = response.choices[0].message.content
-        return json.loads(raw)
+        specs = json.loads(raw)
+        return _normalize_specs(specs)
 
     except json.JSONDecodeError as exc:
         print(f"WARNING: LLM returned invalid JSON for {research.mpn}: {exc}")

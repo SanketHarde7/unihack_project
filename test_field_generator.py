@@ -267,7 +267,7 @@ def test_full_generate_with_mock_specs():
     print("TESTING FULL GENERATE (mock LLM, no real API call)")
     print("=" * 70)
 
-    import field_generator as fg
+    import src.field_generator as fg
 
     all_pass = True
 
