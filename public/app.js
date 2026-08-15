@@ -415,3 +415,233 @@ window.addEventListener("DOMContentLoaded", () => {
   // Auto-enrich default preset (PDSH4816AF)
   enrichProduct("PDSH4816AF", "PDSH4816AF Dishwasher SS - Display Only", "Appliance Dealers Cooperative (APPDE)", false);
 });
+
+
+// ===========================================================================
+// Batch CSV Upload Module
+// ===========================================================================
+
+(function initBatchUpload() {
+  // DOM refs
+  const batchDropZone = document.getElementById("batch-drop-zone");
+  const batchFileInput = document.getElementById("batch-file-input");
+  const selectedFileInfo = document.getElementById("selected-file-info");
+  const selectedFileName = document.getElementById("selected-file-name");
+  const selectedFileRows = document.getElementById("selected-file-rows");
+  const clearFileBtn = document.getElementById("clear-file-btn");
+  const batchEnrichBtn = document.getElementById("batch-enrich-btn");
+  const batchBtnText = batchEnrichBtn.querySelector(".btn-text");
+  const batchBtnLoader = batchEnrichBtn.querySelector(".btn-loader");
+  const batchProgress = document.getElementById("batch-progress");
+  const batchProgressLabel = document.getElementById("batch-progress-label");
+  const batchProgressCount = document.getElementById("batch-progress-count");
+  const batchProgressFill = document.getElementById("batch-progress-fill");
+  const batchProgressMpn = document.getElementById("batch-progress-mpn");
+  const batchResultsCard = document.getElementById("batch-results-card");
+  const batchResultsBody = document.getElementById("batch-results-body");
+  const batchResultsSummary = document.getElementById("batch-results-summary");
+
+  let selectedFile = null;
+  let parsedRowCount = 0;
+
+  // --- File Selection ---
+  function handleFileSelect(file) {
+    if (!file || !file.name.toLowerCase().endsWith(".csv")) {
+      alert("Please select a .csv file.");
+      return;
+    }
+    selectedFile = file;
+
+    // Count rows by reading the file
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const lines = text.trim().split("\n").filter((l) => l.trim());
+      parsedRowCount = Math.max(0, lines.length - 1); // subtract header row
+
+      selectedFileName.textContent = file.name;
+      selectedFileRows.textContent = `${parsedRowCount} row${parsedRowCount !== 1 ? "s" : ""}`;
+      selectedFileInfo.classList.remove("hidden");
+      batchEnrichBtn.disabled = parsedRowCount === 0;
+    };
+    reader.readAsText(file);
+  }
+
+  batchFileInput.addEventListener("change", (e) => {
+    if (e.target.files.length > 0) {
+      handleFileSelect(e.target.files[0]);
+    }
+  });
+
+  // Drag & Drop
+  batchDropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    batchDropZone.classList.add("drag-over");
+  });
+
+  batchDropZone.addEventListener("dragleave", () => {
+    batchDropZone.classList.remove("drag-over");
+  });
+
+  batchDropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    batchDropZone.classList.remove("drag-over");
+    if (e.dataTransfer.files.length > 0) {
+      handleFileSelect(e.dataTransfer.files[0]);
+      // Also set the input so the form data reads it
+      const dt = new DataTransfer();
+      dt.items.add(e.dataTransfer.files[0]);
+      batchFileInput.files = dt.files;
+    }
+  });
+
+  // Clear file
+  clearFileBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    selectedFile = null;
+    parsedRowCount = 0;
+    batchFileInput.value = "";
+    selectedFileInfo.classList.add("hidden");
+    batchEnrichBtn.disabled = true;
+  });
+
+  // --- Batch Enrichment via SSE ---
+  batchEnrichBtn.addEventListener("click", async () => {
+    if (!selectedFile) {
+      alert("Please select a CSV file first.");
+      return;
+    }
+
+    // UI: enter processing state
+    batchBtnText.classList.add("hidden");
+    batchBtnLoader.classList.remove("hidden");
+    batchEnrichBtn.disabled = true;
+    batchProgress.classList.remove("hidden");
+    batchProgress.classList.add("active");
+    batchProgressLabel.textContent = "Uploading CSV...";
+    batchProgressCount.textContent = `0 / ${parsedRowCount}`;
+    batchProgressFill.style.width = "0%";
+    batchProgressMpn.textContent = "";
+    batchResultsCard.classList.add("hidden");
+    batchResultsBody.innerHTML = "";
+    batchResultsSummary.innerHTML = "";
+
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      const response = await fetch(`${API_BASE}/api/enrich-batch`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.detail || "Batch upload failed");
+      }
+
+      // Read SSE stream
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let completedRows = 0;
+      const allResults = [];
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Parse SSE events from buffer
+        const events = buffer.split("\n\n");
+        buffer = events.pop() || ""; // keep incomplete event in buffer
+
+        for (const event of events) {
+          const dataLine = event.trim();
+          if (!dataLine.startsWith("data: ")) continue;
+
+          try {
+            const eventData = JSON.parse(dataLine.substring(6));
+
+            if (eventData.type === "progress") {
+              const pct = Math.round((eventData.current / eventData.total) * 100);
+              batchProgressLabel.textContent = `Processing row ${eventData.current} of ${eventData.total}...`;
+              batchProgressMpn.textContent = `🔧 MPN: ${eventData.mpn}`;
+              // Don't update fill here — update on complete
+            }
+
+            if (eventData.type === "pacing") {
+              batchProgressLabel.textContent = `⏳ Rate-limit cooldown (${eventData.wait_seconds}s) before row ${eventData.current + 1}...`;
+            }
+
+            if (eventData.type === "row_complete") {
+              completedRows++;
+              const pct = Math.round((completedRows / eventData.total) * 100);
+              batchProgressFill.style.width = `${pct}%`;
+              batchProgressCount.textContent = `${completedRows} / ${eventData.total}`;
+
+              allResults.push(eventData.result);
+              appendBatchResultRow(completedRows, eventData.result);
+              batchResultsCard.classList.remove("hidden");
+            }
+
+            if (eventData.type === "done") {
+              batchProgressLabel.textContent = `✅ Batch complete! ${eventData.total_processed} items processed.`;
+              batchProgressFill.style.width = "100%";
+              batchProgress.classList.remove("active");
+              renderBatchSummary(allResults);
+            }
+          } catch (parseErr) {
+            // Skip malformed events
+          }
+        }
+      }
+    } catch (err) {
+      alert(`Batch Error: ${err.message}`);
+      batchProgress.classList.add("hidden");
+    } finally {
+      batchBtnText.classList.remove("hidden");
+      batchBtnLoader.classList.add("hidden");
+      batchEnrichBtn.disabled = false;
+      batchProgress.classList.remove("active");
+    }
+  });
+
+  // --- Render batch result rows incrementally ---
+  function appendBatchResultRow(idx, result) {
+    const tr = document.createElement("tr");
+    const confPct = Math.round((result.confidence_score || 0) * 100);
+    const confClass = result.confidence === "HIGH" ? "badge-high" : result.confidence === "MEDIUM" ? "badge-medium" : "badge-low";
+    const validText = result.is_valid ? "✅ Yes" : "❌ No";
+    const validClass = result.is_valid ? "yes" : "no";
+    const statusClass = result.status === "success" ? "success" : "error";
+
+    tr.innerHTML = `
+      <td class="table-idx">${idx}</td>
+      <td class="mpn-cell">${result.mpn}</td>
+      <td class="brand-cell">${result.resolved_brand || "—"}</td>
+      <td>${result.research_status || "—"} <span style="color:var(--text-dim)">(${result.sources_count || 0} src)</span></td>
+      <td class="confidence-cell"><span class="conf-badge ${confClass}" style="font-size:10px">${result.confidence}</span> ${confPct}%</td>
+      <td class="valid-cell ${validClass}">${validText}</td>
+      <td>${result.needs_review_fields_count || 0}</td>
+      <td><span class="status-tag ${statusClass}">${result.status === "success" ? "OK" : "ERR"}</span></td>
+    `;
+    batchResultsBody.appendChild(tr);
+  }
+
+  // --- Render summary pills ---
+  function renderBatchSummary(results) {
+    const validCount = results.filter((r) => r.is_valid).length;
+    const highCount = results.filter((r) => r.confidence === "HIGH").length;
+    const medCount = results.filter((r) => r.confidence === "MEDIUM").length;
+    const lowCount = results.filter((r) => r.confidence === "LOW").length;
+
+    batchResultsSummary.innerHTML = `
+      <span class="batch-summary-pill valid"><i class="fa-solid fa-check-circle"></i> ${validCount}/${results.length} Valid</span>
+      ${highCount > 0 ? `<span class="batch-summary-pill high">${highCount} HIGH</span>` : ""}
+      ${medCount > 0 ? `<span class="batch-summary-pill medium">${medCount} MEDIUM</span>` : ""}
+      ${lowCount > 0 ? `<span class="batch-summary-pill low">${lowCount} LOW</span>` : ""}
+    `;
+  }
+})();

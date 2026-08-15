@@ -164,6 +164,55 @@
             </div>
           </div>
         </div>
+
+        <!-- CSV Batch Upload Section -->
+        <div class="batch-upload-box">
+          <div class="batch-header">
+            <div class="title-with-icon">
+              <i class="fa-solid fa-file-arrow-up text-accent"></i>
+              <h3>CSV Batch Upload</h3>
+            </div>
+            <span class="badge-hint">Multi-Row Pipeline</span>
+          </div>
+
+          <div class="batch-upload-zone" id="batch-drop-zone">
+            <div class="upload-icon-wrapper">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <p class="upload-label">Drop a CSV file here or click to browse</p>
+            <p class="upload-sublabel">Required columns: <code>Mfg_Part_Num</code>, <code>Part_Desc</code>, <code>Part_Manuf</code></p>
+            <input type="file" id="batch-file-input" accept=".csv" class="file-input-hidden">
+            <div class="selected-file-info hidden" id="selected-file-info">
+              <i class="fa-solid fa-file-csv"></i>
+              <span id="selected-file-name">filename.csv</span>
+              <span id="selected-file-rows" class="file-rows-badge">0 rows</span>
+              <button type="button" id="clear-file-btn" class="clear-file-btn" title="Remove file"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+          </div>
+
+          <button type="button" id="batch-enrich-btn" class="primary-btn batch-btn" disabled>
+            <span class="btn-text"><i class="fa-solid fa-gears"></i> Enrich Batch</span>
+            <div class="btn-loader hidden"><i class="fa-solid fa-circle-notch fa-spin"></i> Enriching...</div>
+          </button>
+
+          <!-- Progress Indicator -->
+          <div class="batch-progress hidden" id="batch-progress">
+            <div class="batch-progress-header">
+              <span class="batch-progress-label" id="batch-progress-label">Initializing...</span>
+              <span class="batch-progress-count" id="batch-progress-count">0 / 0</span>
+            </div>
+            <div class="batch-progress-track">
+              <div class="batch-progress-fill" id="batch-progress-fill" style="width: 0%"></div>
+            </div>
+            <p class="batch-progress-mpn" id="batch-progress-mpn"></p>
+          </div>
+
+          <p class="batch-honesty-note">
+            <i class="fa-solid fa-circle-info"></i>
+            Tuned for dishwasher-category products. Other categories will be enriched but may show lower confidence. Max 20 rows per upload.
+          </p>
+        </div>
+
       </section>
 
       <!-- Right Column: Results & Enriched Output -->
@@ -310,6 +359,39 @@
             </table>
           </div>
         </div>
+
+        <!-- Batch Results Table (hidden by default, shown after batch upload) -->
+        <div class="batch-results-card glass-card hidden" id="batch-results-card">
+          <div class="section-header">
+            <div class="title-with-icon">
+              <i class="fa-solid fa-list-check text-accent"></i>
+              <h3>Batch Enrichment Results</h3>
+            </div>
+            <div class="batch-results-summary" id="batch-results-summary">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table batch-table" id="batch-results-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>MPN</th>
+                  <th>Brand</th>
+                  <th>Research</th>
+                  <th>Confidence</th>
+                  <th>Valid?</th>
+                  <th># Review</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="batch-results-body">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </section>
     </main>
   </div>

@@ -20,6 +20,8 @@ constant, or (c) flagged as needs_review with empty value. Nothing is fabricated
 import csv
 import json
 import os
+import re
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -139,6 +141,10 @@ CANONICAL_BRAND_NAMES: dict[str, dict[str, str]] = {
         "manufacturer_name": "LG Electronics",
     },
     "kitchenaid": {
+        "brand_name": "KitchenAid\u00ae",
+        "manufacturer_name": "Whirlpool Corporation",
+    },
+    "kitchen aid": {
         "brand_name": "KitchenAid\u00ae",
         "manufacturer_name": "Whirlpool Corporation",
     },
@@ -450,59 +456,172 @@ def _normalize_specs(specs: dict, brand_fallback: str = "") -> dict:
     return specs
 
 
+def _clean_source_content(raw_content: str, mpn: str, brand: str) -> str:
+    """Clean nav boilerplate from page content, then extract a 1500-char window
+    centered around the MPN or brand keyword instead of naive first-1500-chars.
+    """
+    if not raw_content:
+        return ""
+
+    # Strip common boilerplate lines (nav, cookie banners, header cruft)
+    boilerplate_patterns = [
+        r"^\s*skip to.*$",
+        r"^\s*cookie.*$",
+        r"^\s*sign in.*$",
+        r"^\s*sign up.*$",
+        r"^\s*log in.*$",
+        r"^\s*my account.*$",
+        r"^\s*cart.*$",
+        r"^\s*shopping cart.*$",
+        r"^\s*menu.*$",
+        r"^\s*search.*$",
+        r"^\s*home\s*$",
+        r"^\s*\|\s*$",
+        r"^\s*>\s*$",
+        r"^\s*close.*$",
+        r"^\s*accept.*cookies.*$",
+        r"^\s*we use cookies.*$",
+        r"^\s*privacy.*$",
+        r"^\s*find a store.*$",
+        r"^\s*customer service.*$",
+        r"^\s*help\s*$",
+        r"^\s*contact us.*$",
+    ]
+    lines = raw_content.split("\n")
+    cleaned_lines = []
+    for line in lines:
+        stripped = line.strip()
+        # Skip very short nav-style lines (likely menu items)
+        if len(stripped) < 4:
+            continue
+        # Skip lines matching boilerplate patterns
+        if any(re.match(pat, stripped, re.IGNORECASE) for pat in boilerplate_patterns):
+            continue
+        cleaned_lines.append(line)
+    cleaned = "\n".join(cleaned_lines)
+
+    # If content is already short enough, return as-is
+    if len(cleaned) <= 1500:
+        return cleaned
+
+    # Find the best anchor point: MPN first, then brand name
+    anchor_pos = -1
+    mpn_upper = mpn.upper()
+    cleaned_upper = cleaned.upper()
+
+    anchor_pos = cleaned_upper.find(mpn_upper)
+    if anchor_pos == -1 and brand:
+        # Try brand name (handle "Kitchen Aid" / "KitchenAid" variants)
+        brand_variants = [brand, brand.replace(" ", "")]
+        for variant in brand_variants:
+            anchor_pos = cleaned_upper.find(variant.upper())
+            if anchor_pos != -1:
+                break
+
+    if anchor_pos == -1:
+        # No keyword found — take from start (fallback)
+        return cleaned[:1500]
+
+    # Center a 1500-char window around the anchor
+    half_window = 750
+    start = max(0, anchor_pos - half_window)
+    end = start + 1500
+    if end > len(cleaned):
+        end = len(cleaned)
+        start = max(0, end - 1500)
+
+    return cleaned[start:end]
+
+
 def _extract_specs_via_llm(research: ResearchResult) -> dict | None:
-    """Call Groq LLM to extract structured specs from research text.
+    """Call Groq LLM to extract structured specs from research text with retry on rate limit.
 
     Returns extracted dict on success.
-    Returns None if research was not found or LLM call fails — caller marks
+    Returns None if research was not found or all retries fail — caller marks
     all non-deterministic fields as needs_review.
     """
     # Pre-check: skip LLM entirely if no research found (save tokens/cost)
     if research.status != "found":
         return None
 
-    # Build combined research text from all sources
-    parts = []
-    if research.raw_answer:
-        parts.append(f"Summary: {research.raw_answer}")
-    for source in research.sources:
-        parts.append(f"\nSource: {source['url']}\n{source['content']}")
-    research_text = "\n".join(parts)
-
-    # Groq free tier has an 8000 TPM limit. 
-    # ~12,000 chars is roughly 3000 tokens, safely allowing 2 requests per minute.
-    if len(research_text) > 12000:
-        print(f"  WARN: Truncating research text from {len(research_text)} to 12000 chars")
-        research_text = research_text[:12000] + "\n...[TRUNCATED TO AVOID RATE LIMITS]"
-
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         print("WARNING: GROQ_API_KEY not set — skipping LLM extraction")
         return None
+
+    # Sort sources by relevance score if available, pick top 3
+    sorted_sources = sorted(
+        research.sources,
+        key=lambda s: float(s.get("score", 0.0) or 0.0),
+        reverse=True,
+    )[:3]
+
+    # Build combined research text from top 3 sources with smart content windowing
+    parts = []
+    if research.raw_answer:
+        parts.append(f"Summary: {research.raw_answer[:1500]}")
+    for source in sorted_sources:
+        raw_content = source.get("content", "")
+        content_snippet = _clean_source_content(raw_content, research.mpn, research.brand)
+        url = source.get('url', '')
+        parts.append(f"\nSource: {url}\n{content_snippet}")
+
+        # Debug: show first 200 chars of what we're sending to LLM
+        print(f"    [DEBUG LLM input] {research.mpn} | {url[:60]}... | first 200 chars: {content_snippet[:200]!r}")
+    research_text = "\n".join(parts)
 
     messages = _build_extraction_messages(
         research_text, research.mpn, research.brand
     )
 
     client = Groq(api_key=api_key)
-    try:
-        response = client.chat.completions.create(
-            model="openai/gpt-oss-120b",
-            messages=messages,
-            response_format={"type": "json_object"},
-            temperature=0,
-            max_completion_tokens=4096,
-        )
-        raw = response.choices[0].message.content
-        specs = json.loads(raw)
-        return _normalize_specs(specs, brand_fallback=research.brand)
+    max_retries = 2
 
-    except json.JSONDecodeError as exc:
-        print(f"WARNING: LLM returned invalid JSON for {research.mpn}: {exc}")
-        return None
-    except Exception as exc:  # noqa: BLE001
-        print(f"WARNING: Groq API error for {research.mpn}: {exc}")
-        return None
+    for attempt in range(max_retries + 1):
+        try:
+            response = client.chat.completions.create(
+                model="openai/gpt-oss-120b",
+                messages=messages,
+                response_format={"type": "json_object"},
+                temperature=0,
+                max_completion_tokens=4096,
+            )
+            raw = response.choices[0].message.content
+            specs = json.loads(raw)
+            return _normalize_specs(specs, brand_fallback=research.brand)
+
+        except json.JSONDecodeError as exc:
+            print(f"WARNING: LLM returned invalid JSON for {research.mpn}: {exc}")
+            return None
+        except Exception as exc:  # Catch RateLimitError, 429, 413, etc.
+            exc_str = str(exc).lower()
+            is_rate_limit = (
+                "rate_limit" in exc_str
+                or "tokens per minute" in exc_str
+                or "429" in exc_str
+                or "413" in exc_str
+                or "tpm" in exc_str
+                or "too large" in exc_str
+            )
+            if is_rate_limit and attempt < max_retries:
+                # Try to extract retry-after from error string if present
+                wait_match = re.search(r"try again in (\d+(\.\d+)?)s", str(exc), re.IGNORECASE)
+                if wait_match:
+                    wait_secs = int(float(wait_match.group(1))) + 5
+                else:
+                    wait_secs = 65
+                print(
+                    f"  ⏳ Rate limit hit for {research.mpn} "
+                    f"(attempt {attempt + 1}/{max_retries + 1}). "
+                    f"Waiting {wait_secs}s before retry..."
+                )
+                time.sleep(wait_secs)
+                continue
+
+            print(f"WARNING: Groq API error for {research.mpn} (attempt {attempt + 1}): {exc}")
+            return None
+
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -518,6 +637,10 @@ def _build_mobile_desc(specs: dict, mpn: str) -> str:
              → Manufacturer+Brand space-joined (different entities), then comma-joined fields
       Row 2: "Whirlpool, Dishwasher, Eco Series, WDTS7024RZ, Built-in Mounting"
              → Brand only (≈ manufacturer), extra trailing spec to reach 60 chars
+
+    HARD RULE: Never return a string over 80 chars. If over, progressively
+    drop mounting suffix → series → shorten name_part until it fits.
+    Final safety net: hard truncate to 77 + "...".
     """
     manufacturer = specs.get("manufacturer_name", "")
     brand_raw = _strip_brand_symbols(specs.get("brand_name", ""))
@@ -538,15 +661,34 @@ def _build_mobile_desc(specs: dict, mpn: str) -> str:
     else:
         name_part = mpn  # last resort
 
-    # Comma-separated core fields
+    # --- Attempt 1: full build with mounting suffix ---
     core_parts = [p for p in [name_part, "Dishwasher", series, mpn] if p]
     result = ", ".join(core_parts)
 
-    # If under 60 chars and mounting is available, append to reach target range
+    # If under 60 chars and mounting is available, try appending
     if len(result) < 60 and mounting:
         candidate = f"{result}, {mounting} Mounting"
         if len(candidate) <= 80:
             result = candidate
+
+    # --- Attempt 2: if over 80, drop mounting suffix ---
+    if len(result) > 80:
+        core_parts = [p for p in [name_part, "Dishwasher", series, mpn] if p]
+        result = ", ".join(core_parts)
+
+    # --- Attempt 3: if still over 80, drop series ---
+    if len(result) > 80:
+        core_parts = [p for p in [name_part, "Dishwasher", mpn] if p]
+        result = ", ".join(core_parts)
+
+    # --- Attempt 4: if still over 80, use brand only (drop manufacturer) ---
+    if len(result) > 80 and brand_raw:
+        core_parts = [p for p in [brand_raw, "Dishwasher", mpn] if p]
+        result = ", ".join(core_parts)
+
+    # --- Safety net: hard truncate ---
+    if len(result) > 80:
+        result = result[:77] + "..."
 
     return result
 
@@ -715,6 +857,11 @@ def _build_retail_desc(specs: dict) -> str:
     if trailing:
         return f"{opening}, {', '.join(trailing)}"
     return opening
+
+
+# ---------------------------------------------------------------------------
+# Main generation function
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------

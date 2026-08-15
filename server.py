@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi import FastAPI, File, HTTPException, Query, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -178,6 +178,174 @@ def enrich_product(req: EnrichRequest):
         "validation": val_dict,
         "cached": False,
     }
+
+
+# ---------------------------------------------------------------------------
+# Batch CSV Upload Endpoint (SSE Progress Streaming)
+# ---------------------------------------------------------------------------
+
+MAX_BATCH_ROWS = 20
+BATCH_PACE_SECONDS = 20
+
+
+@app.post("/api/enrich-batch")
+async def enrich_batch(file: UploadFile = File(...)):
+    """Enrich a CSV batch upload with real-time SSE progress streaming.
+
+    Processes rows sequentially with pacing to respect Groq TPM limits.
+    Accepts CSV with columns: Mfg_Part_Num, Part_Desc, Part_Manuf (optional).
+    Capped at MAX_BATCH_ROWS rows for demo safety.
+    """
+    import asyncio
+
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Please upload a .csv file.")
+
+    # Read and parse the CSV
+    content = await file.read()
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError:
+        text = content.decode("latin-1")
+
+    reader = csv.DictReader(io.StringIO(text))
+    rows = list(reader)
+
+    if not rows:
+        raise HTTPException(status_code=400, detail="CSV file is empty or has no data rows.")
+
+    # Validate required columns
+    required_cols = {"Mfg_Part_Num", "Part_Desc"}
+    if not required_cols.issubset(set(reader.fieldnames or [])):
+        raise HTTPException(
+            status_code=400,
+            detail=f"CSV must contain columns: {', '.join(sorted(required_cols))}. Found: {', '.join(reader.fieldnames or [])}",
+        )
+
+    if len(rows) > MAX_BATCH_ROWS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"CSV contains {len(rows)} rows, but the demo limit is {MAX_BATCH_ROWS} rows. Please reduce the file size.",
+        )
+
+    # Stream progress via SSE (Server-Sent Events)
+    async def generate_sse():
+        results = []
+        total = len(rows)
+
+        for idx, row in enumerate(rows, start=1):
+            mpn = row.get("Mfg_Part_Num", "").strip()
+            desc = row.get("Part_Desc", "").strip() or f"{mpn} Dishwasher"
+            distributor = row.get("Part_Manuf", "").strip() or "Appliance Dealers Cooperative (APPDE)"
+
+            if not mpn:
+                progress_event = json.dumps({
+                    "type": "progress",
+                    "current": idx,
+                    "total": total,
+                    "mpn": "(empty)",
+                    "status": "skipped",
+                })
+                yield f"data: {progress_event}\n\n"
+                continue
+
+            # Send progress event
+            progress_event = json.dumps({
+                "type": "progress",
+                "current": idx,
+                "total": total,
+                "mpn": mpn,
+                "status": "processing",
+            })
+            yield f"data: {progress_event}\n\n"
+
+            # Run the enrichment pipeline (same stages as /api/enrich)
+            try:
+                brand_res = resolve_brand(mpn, desc)
+
+                if brand_res.brand:
+                    research_res = research_product(mpn, brand_res.brand, product_type="dishwasher")
+                else:
+                    research_res = ResearchResult(
+                        mpn=mpn, brand="", status="not_found", raw_answer="Brand unresolved"
+                    )
+
+                input_row = {
+                    "Mfg_Part_Num": mpn,
+                    "Part_Desc": desc,
+                    "Part_Manuf": distributor,
+                }
+                gen_res = generate_fields(brand_res, research_res, input_row)
+                val_summary = validate_enriched_record(gen_res, brand_res, research_res)
+
+                val_dict = {
+                    "is_valid": val_summary.is_valid,
+                    "confidence": val_summary.confidence,
+                    "confidence_score": val_summary.confidence_score,
+                    "score_breakdown": val_summary.score_breakdown,
+                    "issues": [asdict(i) for i in val_summary.issues],
+                    "needs_review_fields": val_summary.needs_review,
+                }
+
+                sources_list = [s["url"] for s in research_res.sources]
+                save_record(mpn, brand_res.brand or "Unknown", gen_res.fields, sources_list, val_dict)
+
+                result = {
+                    "mpn": mpn,
+                    "resolved_brand": brand_res.brand or "Unknown",
+                    "brand_confidence": brand_res.confidence,
+                    "research_status": research_res.status,
+                    "sources_count": len(sources_list),
+                    "confidence": val_summary.confidence,
+                    "confidence_score": val_summary.confidence_score,
+                    "is_valid": val_summary.is_valid,
+                    "needs_review_fields_count": len(val_summary.needs_review),
+                    "status": "success",
+                }
+            except Exception as exc:
+                result = {
+                    "mpn": mpn,
+                    "resolved_brand": "Error",
+                    "brand_confidence": "none",
+                    "research_status": "error",
+                    "sources_count": 0,
+                    "confidence": "LOW",
+                    "confidence_score": 0.0,
+                    "is_valid": False,
+                    "needs_review_fields_count": 0,
+                    "status": f"error: {str(exc)[:100]}",
+                }
+
+            results.append(result)
+
+            # Send row-complete event
+            row_event = json.dumps({"type": "row_complete", "current": idx, "total": total, "result": result})
+            yield f"data: {row_event}\n\n"
+
+            # Pacing between rows to respect Groq TPM limits
+            if idx < total:
+                pace_event = json.dumps({
+                    "type": "pacing",
+                    "current": idx,
+                    "total": total,
+                    "wait_seconds": BATCH_PACE_SECONDS,
+                })
+                yield f"data: {pace_event}\n\n"
+                await asyncio.sleep(BATCH_PACE_SECONDS)
+
+        # Final event with all results
+        done_event = json.dumps({"type": "done", "results": results, "total_processed": len(results)})
+        yield f"data: {done_event}\n\n"
+
+    return StreamingResponse(
+        generate_sse(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.get("/api/catalog")
