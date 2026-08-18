@@ -292,6 +292,9 @@ function renderAttributesGrid(fields, fieldSources, needsReviewList) {
     if (!val || needsReviewList.includes(valCol)) {
       tagClass = "needs-review";
       tagText = "Needs Review";
+    } else if (source === "research_pdf") {
+      tagClass = "research_pdf";
+      tagText = "PDF Doc";
     } else if (source === "derived") {
       tagClass = "derived";
       tagText = "Derived";

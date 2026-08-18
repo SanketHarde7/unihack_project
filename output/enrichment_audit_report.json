@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-08-15 13:50:52",
+  "timestamp": "2026-08-15 20:31:01",
   "total_items_processed": 10,
-  "execution_time_seconds": 409.03,
-  "high_confidence_count": 4,
-  "medium_confidence_count": 6,
+  "execution_time_seconds": 640.46,
+  "high_confidence_count": 3,
+  "medium_confidence_count": 7,
   "low_confidence_count": 0,
   "valid_records_count": 10,
   "delivery_csv_path": "C:\\Users\\sanke\\OneDrive\\Desktop\\unihack\\output\\Unihack_Enriched_Catalog_Delivery.csv",
@@ -17,37 +17,29 @@
       "research_status": "found",
       "sources_count": 9,
       "sources": [
-        "https://www.kitchenaid.com/major-appliances/dishwashers/front-controls/p.360%C2%B0-max-jets-third-rack-dishwasher-with-50+-total-max-jets%2C-44-dba-.kdfm404kps.html",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/front-controls/p.pdpv5.KDFM404KPS.html?bvstate=pg%3A9%2Fct%3Ar",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/front-controls/p.360%C2%B0-max-jets-third-rack-dishwasher-with-50+-total-wash-jets,-44-dba.kdfm404kps.html?bvstate=pg%3A65%2Fct%3Ar",
         "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-50+-total-wash-jets,-44-dba.kdtm404kps.html",
+        "https://www.kitchenaid.com/major-appliances/dishwashers/front-controls/p.360%C2%B0-max-jets-third-rack-dishwasher-with-prodry-system,-44-dba.kdfs424sps.html",
+        "https://www.kitchenaid.com/major-appliances/dishwashers/front-controls/p.360%C2%B0-max-jets-third-rack-dishwasher-with-50+-total-max-jets%2C-44-dba-.kdfm404kps.html",
+        "https://www.kitchenaid.com/pinch-of-help/major-appliances/dishwasher-troubleshooting-guide.html",
+        "https://www.kitchenaid.com/pinch-of-help/major-appliances/types-of-dishwashers-buying-guide.html",
         "https://www.kitchenaid.com/owners-center-pdp.KDFM404KPS.html",
         "https://www.kitchenaid.com/pinch-of-help/major-appliances/how-to-install-a-dishwasher.html",
-        "https://www.kitchenaid.com/pinch-of-help/major-appliances/types-of-dishwashers-buying-guide.html",
         "https://producthelp.kitchenaid.com/FAQ/Where_can_I_find_the_manual_for_my_appliance%3F",
         "https://www.kitchenaid.com/owners-center-pdp.KDFE204KPS.html"
       ],
       "validation": {
         "is_valid": true,
         "confidence": "MEDIUM",
-        "confidence_score": 0.68,
+        "confidence_score": 0.7,
         "score_breakdown": {
           "brand_resolution": 0.6,
           "source_verification": 1.0,
-          "attribute_completeness": 0.2,
+          "attribute_completeness": 0.26666666666666666,
           "description_compliance": 1.0,
           "digital_assets": 1.0
         },
-        "issues": [
-          {
-            "field": "MOBILE_DESC",
-            "issue_type": "warning",
-            "message": "Length 56 is under 60 chars target",
-            "rule_code": "RULE_DESC_07"
-          }
-        ],
+        "issues": [],
         "needs_review_fields": [
-          "ATTRIBUTE_VALUE 1",
           "ATTRIBUTE_VALUE 10",
           "ATTRIBUTE_VALUE 11",
           "ATTRIBUTE_VALUE 13",
@@ -61,22 +53,21 @@
           "ATTRIBUTE_VALUE 9",
           "amperage_uom",
           "depth_uom",
-          "item_features",
           "marketing_description",
           "max_height_uom",
           "min_height_uom",
           "standards_approvals",
           "voltage_uom",
-          "warranty",
-          "with_text"
+          "warranty"
         ]
       },
       "field_provenance_summary": {
         "constant": 21,
         "input": 7,
-        "research": 11,
+        "research": 25,
+        "research_pdf": 0,
         "derived": 7,
-        "empty": 206
+        "empty": 192
       }
     },
     {
@@ -85,15 +76,16 @@
       "resolved_brand": "Frigidaire",
       "brand_confidence": "medium",
       "research_status": "found",
-      "sources_count": 7,
+      "sources_count": 8,
       "sources": [
+        "https://owner.frigidaire.com/product-care/registration",
         "https://owner.frigidaire.com/support-articles/article/delivery-check-list-dishwasher",
         "https://owner.frigidaire.com/support-articles/article/1819543-dishwasher-not-drying",
         "https://owner.frigidaire.com/support-articles/article/1852996-what-should-i-do-if-my-dishwasher-is-not-starting-",
         "https://owner.frigidaire.com/support-articles/article/1831286-dishwasher-not-cleaning",
+        "https://owner.frigidaire.com/support-articles/article/1852990-what-can-i-do-if-my-dishwasher-is-not-draining-",
         "https://owner.frigidaire.com/support-articles/article/1847427-dishwashers-how-do-i-start-my-dishwasher-",
-        "https://owner.frigidaire.com/support-articles/article/1829620-dishwasher-error-code-guide",
-        "https://owner.frigidaire.com/support-articles/article/1852990-what-can-i-do-if-my-dishwasher-is-not-draining-"
+        "https://owner.frigidaire.com/support-articles/article/1829620-dishwasher-error-code-guide"
       ],
       "validation": {
         "is_valid": true,
@@ -147,6 +139,7 @@
         "constant": 21,
         "input": 7,
         "research": 7,
+        "research_pdf": 0,
         "derived": 7,
         "empty": 210
       }
@@ -157,20 +150,19 @@
       "resolved_brand": "GE",
       "brand_confidence": "high",
       "research_status": "found",
-      "sources_count": 12,
+      "sources_count": 11,
       "sources": [
         "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDT715SYVFS",
-        "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDT715SYVFS?region_id=085003&bvstate=pg%3A4%2Fct%3Ar",
-        "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDT715SYVFS?bvstate=pg%3A2%2Fct%3Ar",
         "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDT715SYVFS?recToken=rt.2.WyJwcm9kdWN0IiwgNTcyMjk0NSwgbnVsbCwgIlBEVDcxNVNZVkZTIiwgIlBEVDcxNVNZVkZTIiwgNjk4MTksIDIsICIyMDI2LTA0LTIwVDE5OjQzOjIyLjI0NDU0NloiXQ&bvstate=pg%3A3%2Fct%3Ar",
         "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDT715SYVFS?rrec=true&bvstate=pg%3A10%2Fct%3Ar",
-        "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-with-Sanitize-Cycle-PDT715SYVFS?bvstate=pg%3A8%2Fct%3Ar",
-        "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDT715SYVFS?region_id=085003&bvstate=pg%3A3%2Fct%3Ar",
+        "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDT715SYVFS?bvstate=pg%3A12%2Fct%3Ar",
+        "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-with-Sanitize-Cycle-PDT715SYVFS?bvstate=pg%3A7%2Fct%3Ar",
+        "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDT715SYVFS?bvstate=pg%3A2%2Fct%3Ar",
         "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDT715SYVFS?region_id=085003&bvstate=pg%3A5%2Fct%3Ar",
-        "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDP715SYVFS",
-        "https://products.geappliances.com/appliance/gea-specs/PDP715SYVFS/support",
-        "https://products.geappliances.com/appliance/gea-specs/PDT715SYNFS/support",
-        "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Panel-Ready-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDT715SIYII?recToken=rt.2.WyJwcm9kdWN0IiwgNTcyMjk0NSwgbnVsbCwgIlBEVDcxNVNJWUlJIiwgIlBEVDcxNVNJWUlJIiwgNjk4MzcsIDQsICIyMDI2LTA0LTI4VDE3OjAzOjQ3LjkwMzY0OVoiXQ&bvstate=pg%3A26%2Fct%3Ar"
+        "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-with-Sanitize-Cycle-PDT715SYVFS?bvstate=pg%3A9%2Fct%3Ar",
+        "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDT715SYVFS?region_id=085003&bvstate=pg%3A3%2Fct%3Ar",
+        "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDT715SYVFS?region_id=085003&bvstate=pg%3A4%2Fct%3Ar",
+        "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Fingerprint-Resistant-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDT715SYVFS?bvstate=pg%3A6%2Fct%3Ar"
       ],
       "validation": {
         "is_valid": true,
@@ -211,6 +203,67 @@
           "max_height_uom",
           "min_height_uom",
           "sound_uom",
+          "voltage_uom",
+          "warranty"
+        ]
+      },
+      "field_provenance_summary": {
+        "constant": 21,
+        "input": 7,
+        "research": 12,
+        "research_pdf": 0,
+        "derived": 7,
+        "empty": 205
+      }
+    },
+    {
+      "mpn": "LDPH5554D",
+      "description": "LDPH5554D LG Dishwasher BSS",
+      "resolved_brand": "LG",
+      "brand_confidence": "high",
+      "research_status": "found",
+      "sources_count": 6,
+      "sources": [
+        "https://www.lg.com/us/business/download/resources/CT00021979/LDPH5554_LG_Builder_Spec_Sheet[20240517_003948].pdf",
+        "https://www.lg.com/ca_en/dishwashers/top-control/ldph5554d",
+        "https://www.lg.com/us/dishwashers/lg-ldph5554d-top-control-dishwasher",
+        "https://www.lg.com/us/support/product/lg-LDPH5554D.ABDESNA",
+        "https://www.lg.com/ca_en/shop/all-promotions/lifes-good-celebration-refrigerator-redemption-2025",
+        "https://www.lg.com/us/support/product/lg-LDPH5554S.ASSESNA"
+      ],
+      "validation": {
+        "is_valid": true,
+        "confidence": "HIGH",
+        "confidence_score": 0.84,
+        "score_breakdown": {
+          "brand_resolution": 1.0,
+          "source_verification": 1.0,
+          "attribute_completeness": 0.4666666666666667,
+          "description_compliance": 1.0,
+          "digital_assets": 1.0
+        },
+        "issues": [
+          {
+            "field": "MOBILE_DESC",
+            "issue_type": "warning",
+            "message": "Length 25 is under 60 chars target",
+            "rule_code": "RULE_DESC_07"
+          }
+        ],
+        "needs_review_fields": [
+          "ATTRIBUTE_VALUE 1",
+          "ATTRIBUTE_VALUE 11",
+          "ATTRIBUTE_VALUE 4",
+          "ATTRIBUTE_VALUE 5",
+          "ATTRIBUTE_VALUE 6",
+          "ATTRIBUTE_VALUE 7",
+          "ATTRIBUTE_VALUE 8",
+          "ATTRIBUTE_VALUE 9",
+          "amperage_uom",
+          "depth_uom",
+          "marketing_description",
+          "max_height_uom",
+          "min_height_uom",
           "standards_approvals",
           "voltage_uom",
           "warranty",
@@ -220,30 +273,100 @@
       "field_provenance_summary": {
         "constant": 21,
         "input": 7,
-        "research": 10,
+        "research": 9,
+        "research_pdf": 26,
         "derived": 7,
-        "empty": 207
+        "empty": 182
       }
     },
     {
-      "mpn": "LDPH5554D",
-      "description": "LDPH5554D LG Dishwasher BSS",
-      "resolved_brand": "LG",
+      "mpn": "WDTS7024RZ",
+      "description": "WDTS7024RZ Dishwasher SS - Display Only",
+      "resolved_brand": "Whirlpool",
+      "brand_confidence": "medium",
+      "research_status": "found",
+      "sources_count": 8,
+      "sources": [
+        "https://www.whirlpool.com/content/dam/global/documents/200304/owners-manual-3406880.pdf",
+        "https://www.whirlpool.com/content/dam/global/documents/200604/owners-manual-W10049540.pdf",
+        "https://www.whirlpool.com/kitchen/dishwasher-and-cleaning.html",
+        "https://www.whirlpool.com/kitchen/dishwasher-and-cleaning/comparison-chart.html",
+        "https://www.whirlpool.com/kitchen/dishwasher-and-cleaning/dishwashers.html",
+        "https://producthelp.whirlpool.com/Dishwashers/Product_Info/Dishwasher_Installation_Support/Drain_Line_Installation",
+        "https://www.whirlpool.com/en_ca/services/manuals.html",
+        "https://www.whirlpool.com/services/manuals.html"
+      ],
+      "validation": {
+        "is_valid": true,
+        "confidence": "MEDIUM",
+        "confidence_score": 0.7,
+        "score_breakdown": {
+          "brand_resolution": 0.6,
+          "source_verification": 1.0,
+          "attribute_completeness": 0.26666666666666666,
+          "description_compliance": 1.0,
+          "digital_assets": 1.0
+        },
+        "issues": [
+          {
+            "field": "MOBILE_DESC",
+            "issue_type": "warning",
+            "message": "Length 45 is under 60 chars target",
+            "rule_code": "RULE_DESC_07"
+          }
+        ],
+        "needs_review_fields": [
+          "ATTRIBUTE_VALUE 10",
+          "ATTRIBUTE_VALUE 11",
+          "ATTRIBUTE_VALUE 13",
+          "ATTRIBUTE_VALUE 14",
+          "ATTRIBUTE_VALUE 3",
+          "ATTRIBUTE_VALUE 4",
+          "ATTRIBUTE_VALUE 5",
+          "ATTRIBUTE_VALUE 6",
+          "ATTRIBUTE_VALUE 7",
+          "ATTRIBUTE_VALUE 8",
+          "ATTRIBUTE_VALUE 9",
+          "amperage_uom",
+          "depth_uom",
+          "marketing_description",
+          "max_height_uom",
+          "min_height_uom",
+          "standards_approvals",
+          "voltage_uom",
+          "warranty",
+          "with_text"
+        ]
+      },
+      "field_provenance_summary": {
+        "constant": 21,
+        "input": 7,
+        "research": 14,
+        "research_pdf": 6,
+        "derived": 7,
+        "empty": 197
+      }
+    },
+    {
+      "mpn": "PDD415PYYFS",
+      "description": "PDD415PYYFS GE Dishwasher SS",
+      "resolved_brand": "GE",
       "brand_confidence": "high",
       "research_status": "found",
-      "sources_count": 11,
+      "sources_count": 12,
       "sources": [
-        "https://www.lg.com/ca_en/dishwashers/top-control/ldph5554d",
-        "https://www.lg.com/us/dishwashers/lg-ldph5554d-top-control-dishwasher",
-        "https://www.lg.com/us/press-release/LG-Chip-Wade-and-The-Perch-Event-Release.pdf",
-        "https://www.lg.com/us/dishwashers/lg-ldph5554s-top-control-dishwasher",
-        "https://www.lg.com/us/support/product/lg-LDPH5554D.ABDESNA",
-        "https://www.lg.com/us/press-release/lg-partners-with-expert-craftsman-chip-wade-to-showcase-innovation-in-luxury-treehouse-vacation-rental",
-        "https://www.lg.com/ca_en/support/product-support/cs-LDPH5554D.ABDESNA",
-        "https://www.lg.com/content/lge/ca/en/support/product-support/cs-LDPH5554D.ABDESNA/jcr:content/root/container/supporttab_copy/item_1/headline/jcr:content/root",
-        "https://www.lg.com/ca_en/shop/all-promotions/lifes-good-celebration-refrigerator-redemption-2025",
-        "https://www.lg.com/us/support/product/lg-LDPH5554S.ASSESNA",
-        "https://www.lg.com/ca_en/dishwashers"
+        "https://products.geappliances.com/appliance/gea-specs/PDD415PYYFS/support",
+        "https://products.geappliances.com/appliance/gea-specs/PDD415PYYFS/troubleshoot",
+        "https://www.geappliances.com/appliance/GE-Profile-Dishwasher-Double-Drawer-PDD415PYYFS",
+        "https://www.geappliances.com/appliance/GE-Profile-Dishwasher-Double-Drawer-PDD415PYYFS?region_id=085003&bvstate=pg%3A2%2Fct%3Ar",
+        "https://www.geappliances.com/appliance/GE-Profile-Dishwasher-Double-Drawer-PDD415PYYFS?bvstate=pg%3A3%2Fct%3Ar",
+        "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Panel-Ready-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDT715SIYII?recToken=",
+        "https://www.geappliances.com/appliance/GE-Profile-ENERGY-STAR-Panel-Ready-Top-Control-Stainless-Interior-Dishwasher-with-Microban-Antimicrobial-Technology-PDT715SIYII?recToken=rt.2.WyJwcm9kdWN0IiwgNTcyMjk0NSwgbnVsbCwgIlBEVDcxNVNJWUlJIiwgIlBEVDcxNVNJWUlJIiwgNjk4MTksIDksICIyMDI2LTA0LTI4VDE2OjE3OjU0LjI5MTEwNVoiXQ&bvstate=pg%3A38%2Fct%3Ar",
+        "https://www.geappliances.com/appliance/GE-Profile-Dishwasher-Double-Drawer-PDD415PYYFS?region_id=",
+        "https://www.geappliances.com/appliance/GE-Profile-Dishwasher-Double-Drawer-PDD415PYYFS?bvstate=pg%3A2%2Fct%3Ar",
+        "https://www.geappliances.com/appliance/GE-Profile-Dishwasher-Double-Drawer-PDD415PYYFS?recToken=",
+        "https://www.geappliances.com/appliance/GE-Profile-Dishwasher-Double-Drawer-PDD415PYYFS?recToken=rt.2.WyJwcm9kdWN0IiwgNTcyMjk0NSwgbnVsbCwgIlBERDQxNVBZWUZTIiwgIlBERDQxNVBZWUZTIiwgNjk4MTksIDIsICIyMDI2LTA0LTI5VDExOjM5OjEyLjQxOTYzN1oiXQ&bvstate=pg%3A4%2Fct%3Ar",
+        "https://www.geappliances.com/appliance/GE-Profile-Dishwasher-Double-Drawer-PDD415PYYFS?region_id=085003&bvstate=pg%3A3%2Fct%3Ar"
       ],
       "validation": {
         "is_valid": true,
@@ -260,7 +383,7 @@
           {
             "field": "MOBILE_DESC",
             "issue_type": "warning",
-            "message": "Length 25 is under 60 chars target",
+            "message": "Length 49 is under 60 chars target",
             "rule_code": "RULE_DESC_07"
           }
         ],
@@ -287,76 +410,6 @@
           "sound_uom",
           "standards_approvals",
           "voltage_uom",
-          "warranty"
-        ]
-      },
-      "field_provenance_summary": {
-        "constant": 21,
-        "input": 7,
-        "research": 10,
-        "derived": 7,
-        "empty": 207
-      }
-    },
-    {
-      "mpn": "WDTS7024RZ",
-      "description": "WDTS7024RZ Dishwasher SS - Display Only",
-      "resolved_brand": "Whirlpool",
-      "brand_confidence": "medium",
-      "research_status": "found",
-      "sources_count": 6,
-      "sources": [
-        "https://www.whirlpool.com/kitchen/dishwasher-and-cleaning/comparison-chart.html",
-        "https://www.whirlpool.com/kitchen/dishwasher-and-cleaning/dishwashers.html",
-        "https://producthelp.whirlpool.com/Dishwashers/Product_Info/Dishwasher_Cleaning_and_Care/Using_the_Correct_Type_and_Amount_of_Detergent",
-        "https://producthelp.whirlpool.com/Dishwashers/Product_Info/Dishwasher_Installation_Support/Drain_Line_Installation",
-        "https://www.whirlpool.com/en_ca/services/manuals.html",
-        "https://www.whirlpool.com/services/manuals.html"
-      ],
-      "validation": {
-        "is_valid": true,
-        "confidence": "MEDIUM",
-        "confidence_score": 0.62,
-        "score_breakdown": {
-          "brand_resolution": 0.6,
-          "source_verification": 1.0,
-          "attribute_completeness": 0.0,
-          "description_compliance": 1.0,
-          "digital_assets": 1.0
-        },
-        "issues": [
-          {
-            "field": "MOBILE_DESC",
-            "issue_type": "warning",
-            "message": "Length 33 is under 60 chars target",
-            "rule_code": "RULE_DESC_07"
-          }
-        ],
-        "needs_review_fields": [
-          "ATTRIBUTE_VALUE 1",
-          "ATTRIBUTE_VALUE 10",
-          "ATTRIBUTE_VALUE 11",
-          "ATTRIBUTE_VALUE 12",
-          "ATTRIBUTE_VALUE 13",
-          "ATTRIBUTE_VALUE 14",
-          "ATTRIBUTE_VALUE 15",
-          "ATTRIBUTE_VALUE 2",
-          "ATTRIBUTE_VALUE 3",
-          "ATTRIBUTE_VALUE 4",
-          "ATTRIBUTE_VALUE 5",
-          "ATTRIBUTE_VALUE 6",
-          "ATTRIBUTE_VALUE 7",
-          "ATTRIBUTE_VALUE 8",
-          "ATTRIBUTE_VALUE 9",
-          "amperage_uom",
-          "depth_uom",
-          "item_features",
-          "marketing_description",
-          "max_height_uom",
-          "min_height_uom",
-          "sound_uom",
-          "standards_approvals",
-          "voltage_uom",
           "warranty",
           "with_text"
         ]
@@ -364,79 +417,10 @@
       "field_provenance_summary": {
         "constant": 21,
         "input": 7,
-        "research": 7,
+        "research": 9,
+        "research_pdf": 0,
         "derived": 7,
-        "empty": 210
-      }
-    },
-    {
-      "mpn": "PDD415PYYFS",
-      "description": "PDD415PYYFS GE Dishwasher SS",
-      "resolved_brand": "GE",
-      "brand_confidence": "high",
-      "research_status": "found",
-      "sources_count": 8,
-      "sources": [
-        "https://www.geappliances.com/content/pro/downloads/2026-Q1_GE-Appliances-Contract-PRO_Builder-Appliance-Selection-Guide.pdf",
-        "https://www.geappliances.com/appliance/GE-Profile-Dishwasher-Double-Drawer-PDD415PYYFS",
-        "https://www.geappliances.com/appliance/GE-Profile-Dishwasher-Double-Drawer-PDD415PYYFS?region_id=",
-        "https://www.geappliances.com/appliance/GE-Profile-Dishwasher-Double-Drawer-PDD415PYYFS?bvstate=",
-        "https://www.geappliances.com/appliance/GE-Profile-Dishwasher-Double-Drawer-PDD415PYYFS?recToken=rt.2.WyJwcm9kdWN0IiwgNTcyMjk0NSwgbnVsbCwgIlBERDQxNVBZWUZTIiwgIlBERDQxNVBZWUZTIiwgNjk4MTksIDIsICIyMDI2LTA0LTI5VDExOjM5OjEyLjQxOTYzN1oiXQ&bvstate=pg%3A4%2Fct%3Ar",
-        "https://www.geappliances.com/appliance/GE-Profile-Dishwasher-Double-Drawer-PDD415PYYFS?bvstate=pg%3A2%2Fct%3Ar",
-        "https://www.geappliances.com/appliance/GE-Profile-Dishwasher-Double-Drawer-PDD415PYYFS?region_id=085003&bvstate=pg%3A3%2Fct%3Ar",
-        "https://www.geappliances.com/appliance/GE-Profile-Dishwasher-Double-Drawer-PDD415PYYFS?region_id=085003&bvstate=pg%3A2%2Fct%3Ar"
-      ],
-      "validation": {
-        "is_valid": true,
-        "confidence": "HIGH",
-        "confidence_score": 0.76,
-        "score_breakdown": {
-          "brand_resolution": 1.0,
-          "source_verification": 1.0,
-          "attribute_completeness": 0.2,
-          "description_compliance": 1.0,
-          "digital_assets": 1.0
-        },
-        "issues": [
-          {
-            "field": "MOBILE_DESC",
-            "issue_type": "warning",
-            "message": "Length 27 is under 60 chars target",
-            "rule_code": "RULE_DESC_07"
-          }
-        ],
-        "needs_review_fields": [
-          "ATTRIBUTE_VALUE 1",
-          "ATTRIBUTE_VALUE 10",
-          "ATTRIBUTE_VALUE 11",
-          "ATTRIBUTE_VALUE 12",
-          "ATTRIBUTE_VALUE 13",
-          "ATTRIBUTE_VALUE 14",
-          "ATTRIBUTE_VALUE 3",
-          "ATTRIBUTE_VALUE 4",
-          "ATTRIBUTE_VALUE 5",
-          "ATTRIBUTE_VALUE 6",
-          "ATTRIBUTE_VALUE 7",
-          "ATTRIBUTE_VALUE 9",
-          "amperage_uom",
-          "depth_uom",
-          "item_features",
-          "marketing_description",
-          "max_height_uom",
-          "min_height_uom",
-          "sound_uom",
-          "standards_approvals",
-          "voltage_uom",
-          "warranty",
-          "with_text"
-        ]
-      },
-      "field_provenance_summary": {
-        "constant": 21,
-        "input": 7,
-        "research": 10,
-        "derived": 7,
-        "empty": 207
+        "empty": 208
       }
     },
     {
@@ -450,12 +434,12 @@
         "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.kitchenaid-360%C2%B0-max-jets-third-rack-dishwasher-with-prodry-system-44-dba.kdts424sbe.html",
         "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-prodry-system,-44-dba.kdts424sbe.html",
         "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-prodry-system-44-dba.kdts424sbe.html?%3F=",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.kitchenaid-360%C2%B0-max-jets-third-rack-dishwasher-with-prodry-system-44-dba.kdts424sbe.html?%3F=",
+        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.kitchenaid-360%C2%B0-max-jets-third-rack-dishwasher-with-prodry-system-44-dba.kdts424sbe.html?bvstate=pg%3A17%2Fct%3Ar",
         "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-prodry-system,-44-dba.kdts424sbe.html?frt=27",
+        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.pdpv5.360%C2%B0-max-jets-third-rack-dishwasher-with-prodry-system,-44-dba.kdts424sbe.html?bvstate=",
         "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.pdpv5.360%C2%B0-max-jets-third-rack-dishwasher-with-prodry-system,-44-dba.kdts424sbe.html?bvstate=pg%3A7%2Fct%3Ar",
         "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-prodry-system,-44-dba.kdts424sbe.html?bvstate=pg%3A3%2Fct%3Ar",
         "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-prodry-system-44-dba.kdts424sbe.html?bvstate=pg%3A14%2Fct%3Ar",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.kitchenaid-360%C2%B0-max-jets-third-rack-dishwasher-with-prodry-system-44-dba.kdts424sbe.html?frt=37",
         "https://www.kitchenaid.com/owners.html"
       ],
       "validation": {
@@ -503,6 +487,7 @@
         "constant": 21,
         "input": 7,
         "research": 18,
+        "research_pdf": 0,
         "derived": 7,
         "empty": 199
       }
@@ -513,26 +498,28 @@
       "resolved_brand": "Kitchen Aid",
       "brand_confidence": "high",
       "research_status": "found",
-      "sources_count": 9,
+      "sources_count": 11,
       "sources": [
-        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.third-level-jet-rack-dishwasher-with-40+-total-wash-jets-41-dba.kdts324sps.html",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/front-controls/p.third-level-jet-rack-dishwasher-with-40+-total-wash-jets-41-dba.kdfs324sps.html",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.third-level-jet-rack-dishwasher-with-40+-total-wash-jets-41-dba.kdts324sbe.html",
+        "https://www.kitchenaid.com/major-appliances/dishwashers/see-all.html",
+        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-prodry-system,-44-dba.kdts424sps.html",
+        "https://producthelp.kitchenaid.com/Dishwashers/Product_Info/Dishwasher_Videos/VIDEO%3A_How_to_Install_Custom_Panel_Under-Counter_24%22_Dishwasher_Stainless_Steel_Tub",
         "https://www.kitchenaid.com/major-appliances/dishwashers.html",
-        "https://www.kitchenaid.com/owners.html",
         "https://www.kitchenaid.com/pinch-of-help/major-appliances/dishwasher-cycles-and-settings-explained.html",
-        "https://www.kitchenaid.com/owners-center-pdp.KDTS324SPS0.html",
+        "https://www.kitchenaid.com/pinch-of-help/major-appliances/types-of-dishwashers-buying-guide.html",
+        "https://www.kitchenaid.com/pinch-of-help/major-appliances/top-control-vs-front-control-dishwasher.html",
         "https://www.kitchenaid.com/pinch-of-help/major-appliances/how-to-install-a-dishwasher.html",
-        "https://www.kitchenaid.com/pinch-of-help/major-appliances/types-of-dishwashers-buying-guide.html"
+        "https://www.kitchenaid.com/owners.html",
+        "https://www.kitchenaid.com/major-appliances/microwaves/countertop/p.2.2-cu.-ft.-countertop-microwave.kmcs324sps.html",
+        "https://producthelp.kitchenaid.com/FAQ/Where_can_I_find_the_manual_for_my_appliance%3F"
       ],
       "validation": {
         "is_valid": true,
-        "confidence": "HIGH",
-        "confidence_score": 0.76,
+        "confidence": "MEDIUM",
+        "confidence_score": 0.7,
         "score_breakdown": {
           "brand_resolution": 1.0,
           "source_verification": 1.0,
-          "attribute_completeness": 0.2,
+          "attribute_completeness": 0.0,
           "description_compliance": 1.0,
           "digital_assets": 1.0
         },
@@ -548,7 +535,10 @@
           "ATTRIBUTE_VALUE 1",
           "ATTRIBUTE_VALUE 10",
           "ATTRIBUTE_VALUE 11",
+          "ATTRIBUTE_VALUE 12",
+          "ATTRIBUTE_VALUE 13",
           "ATTRIBUTE_VALUE 14",
+          "ATTRIBUTE_VALUE 15",
           "ATTRIBUTE_VALUE 2",
           "ATTRIBUTE_VALUE 3",
           "ATTRIBUTE_VALUE 4",
@@ -559,19 +549,23 @@
           "ATTRIBUTE_VALUE 9",
           "amperage_uom",
           "depth_uom",
+          "item_features",
           "marketing_description",
           "max_height_uom",
           "min_height_uom",
+          "sound_uom",
           "voltage_uom",
-          "warranty"
+          "warranty",
+          "with_text"
         ]
       },
       "field_provenance_summary": {
         "constant": 21,
         "input": 7,
-        "research": 25,
+        "research": 8,
+        "research_pdf": 0,
         "derived": 7,
-        "empty": 192
+        "empty": 209
       }
     },
     {
@@ -584,15 +578,15 @@
       "sources": [
         "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdps624sjp.html",
         "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.kitchenaid-360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdps624sjp.html?frt=35",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.kitchenaid-360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdps624sjp.html",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.kitchenaid-360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdps624sjp.html?frt=36",
         "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdps624sjp.html?vid=a",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.pdpv5.360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdps624sjp.html?bvstate=pg%3A9%2Fct%3Ar",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdps624sjp.html?vid=",
         "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.KDPS624SJP.html",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.kitchenaid-360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdps624sjp.html?bvstate=pg%3A2%2Fct%3Ar",
+        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.pdpv5.360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdps624sjp.html?bvstate=pg%3A9%2Fct%3Ar",
+        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.pdpv5.kitchenaid-360\u00b0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdts624sps.html",
         "https://www.kitchenaid.com/pinch-of-help/major-appliances/3rd-rack-dishwasher-pros-and-cons.html",
-        "https://www.kitchenaid.com/pinch-of-help/major-appliances/types-of-dishwashers-buying-guide.html"
+        "https://www.kitchenaid.com/pinch-of-help/major-appliances/types-of-dishwashers-buying-guide.html",
+        "https://www.kitchenaid.com/major-appliances/dishwashers.html",
+        "https://producthelp.kitchenaid.com/FAQ/Where_Can_I_Find_the_Tech_Sheet_for_My_Appliance%3F",
+        "https://www.kitchenaid.com/owners-center-pdp.KDTS624SPS0.html"
       ],
       "validation": {
         "is_valid": true,
@@ -605,18 +599,11 @@
           "description_compliance": 1.0,
           "digital_assets": 1.0
         },
-        "issues": [
-          {
-            "field": "MOBILE_DESC",
-            "issue_type": "warning",
-            "message": "Length 56 is under 60 chars target",
-            "rule_code": "RULE_DESC_07"
-          }
-        ],
+        "issues": [],
         "needs_review_fields": [
-          "ATTRIBUTE_VALUE 1",
           "ATTRIBUTE_VALUE 10",
           "ATTRIBUTE_VALUE 11",
+          "ATTRIBUTE_VALUE 13",
           "ATTRIBUTE_VALUE 2",
           "ATTRIBUTE_VALUE 3",
           "ATTRIBUTE_VALUE 4",
@@ -639,9 +626,10 @@
       "field_provenance_summary": {
         "constant": 21,
         "input": 7,
-        "research": 15,
+        "research": 21,
+        "research_pdf": 0,
         "derived": 7,
-        "empty": 202
+        "empty": 196
       }
     },
     {
@@ -650,17 +638,23 @@
       "resolved_brand": "Kitchen Aid",
       "brand_confidence": "medium",
       "research_status": "found",
-      "sources_count": 9,
+      "sources_count": 15,
       "sources": [
+        "https://www.kitchenaid.com/major-appliances/dishwashers/accessories/installation-kits/p.bronze-handle-hardware-accessory-kit-for-kitchenaid-dishwasher.w11774816.html",
+        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdts624sbe.html?frt=27&bvstate=pg%3A7%2Fct%3Ar",
+        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.kitchenaid-360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdts624sbe.html",
+        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdts624sbe.html?vid=",
+        "https://producthelp.kitchenaid.com/Dishwashers/Product_Info/Dishwasher_Installation_Support/Drain_Line_Installation",
+        "https://producthelp.kitchenaid.com/Dishwashers/Product_Info/Dishwasher_Videos/VIDEO%3A_How_to_Install_a_Dishwasher_(2020_Redesign)",
+        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdts624sbe.html?frt=27",
+        "https://producthelp.kitchenaid.com/Dishwashers/Product_Info/Dishwasher_Videos/VIDEO%3A_How_to_Install_a_Dishwasher",
         "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdts624sbe.html?vid=a",
         "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdts624sbe.html?frt=30&bvstate=pg%3A11%2Fct%3Ar",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.kitchenaid-360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdts624sbe.html",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdts624sbe.html?frt=27&bvstate=pg%3A7%2Fct%3Ar",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdts624sbe.html?vid=",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.kitchenaid-360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system,-44-dba.kdts624sbe.html?%3F=",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.KDTS624SBE.html",
-        "https://www.kitchenaid.com/major-appliances/dishwashers/integrated-control/p.360%C2%B0-max-jets-third-rack-dishwasher-with-advanced-prodry-system-and-ultra-bright-led-lighting,-44-dba.kdts724sbe.html",
-        "https://www.kitchenaid.com/pinch-of-help/major-appliances/how-to-install-a-dishwasher.html"
+        "https://www.kitchenaid.com/pinch-of-help/major-appliances/dishwasher-placement-ideas.html",
+        "https://www.kitchenaid.com/pinch-of-help/major-appliances/how-to-install-a-dishwasher.html",
+        "https://www.kitchenaid.com/pinch-of-help/major-appliances/how-to-choose-the-right-dishwasher-size.html",
+        "https://www.kitchenaid.com/owners-center-pdp.KDTS624SBE0.html",
+        "https://www.kitchenaid.com/owners-center-pdp.KDTS624SPS0.html"
       ],
       "validation": {
         "is_valid": true,
@@ -677,9 +671,9 @@
         "needs_review_fields": [
           "ATTRIBUTE_VALUE 10",
           "ATTRIBUTE_VALUE 11",
+          "ATTRIBUTE_VALUE 13",
           "ATTRIBUTE_VALUE 14",
           "ATTRIBUTE_VALUE 2",
-          "ATTRIBUTE_VALUE 3",
           "ATTRIBUTE_VALUE 4",
           "ATTRIBUTE_VALUE 5",
           "ATTRIBUTE_VALUE 6",
@@ -699,9 +693,10 @@
       "field_provenance_summary": {
         "constant": 21,
         "input": 7,
-        "research": 22,
+        "research": 17,
+        "research_pdf": 0,
         "derived": 7,
-        "empty": 195
+        "empty": 200
       }
     }
   ]

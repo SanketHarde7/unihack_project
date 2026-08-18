@@ -138,7 +138,7 @@ def run_pipeline(
             },
             "field_provenance_summary": {
                 source_type: sum(1 for v in gen_res.field_sources.values() if v == source_type)
-                for source_type in ("constant", "input", "research", "derived", "empty")
+                for source_type in ("constant", "input", "research", "research_pdf", "derived", "empty")
             },
         })
 

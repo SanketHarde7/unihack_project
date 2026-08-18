@@ -1,0 +1,119 @@
+[
+  {
+    "mpn": "LDPH5554D",
+    "resolved_brand": "LG",
+    "brand_confidence": "high",
+    "research_status": "found",
+    "sources_count": 6,
+    "is_valid": true,
+    "confidence": "HIGH",
+    "confidence_score": 0.84,
+    "attribute_completeness": 0.4666666666666667,
+    "score_breakdown": {
+      "brand_resolution": 1.0,
+      "source_verification": 1.0,
+      "attribute_completeness": 0.4666666666666667,
+      "description_compliance": 1.0,
+      "digital_assets": 1.0
+    },
+    "field_provenance_summary": {
+      "research_pdf": 20,
+      "research": 8,
+      "empty": 189,
+      "constant": 21,
+      "input": 7,
+      "derived": 7
+    },
+    "research_pdf_fields": [
+      "MFR URL",
+      "MANUFACTURER_NAME",
+      "ITEM_FEATURES_1",
+      "ITEM_FEATURES_2",
+      "ITEM_FEATURES_3",
+      "ITEM_FEATURES_4",
+      "ITEM_FEATURES_5",
+      "ITEM_FEATURES_6",
+      "ITEM_FEATURES_7",
+      "ITEM_FEATURES_8",
+      "ITEM_FEATURES_9",
+      "ITEM_FEATURES_10",
+      "ITEM_FEATURES_11",
+      "ITEM_FEATURES_12",
+      "ATTRIBUTE_VALUE 2",
+      "ATTRIBUTE_VALUE 3",
+      "ATTRIBUTE_VALUE 12",
+      "ATTRIBUTE_UOM 12",
+      "ATTRIBUTE_VALUE 13",
+      "ATTRIBUTE_VALUE 14"
+    ],
+    "attributes_filled": [
+      "Model: LDPH5554D",
+      "Number of Wash Cycles: 9",
+      "Minimum Height: 9.0\" Upper Rack, 12.5\" Lower Rack",
+      "Sound Level: 46",
+      "Material: NeveRust\u2122 Stainless Steel",
+      "Color: PrintProof\u00ae Black Stainless Steel",
+      "Additional Information: 1 Hour Wash and Dry, Leak Detection, QuadWash\u00ae Pro, Dynamic Heat Dry\u2122, 3rd Rack, EasyRack Plus\u00ae, LoDecibel\u2122 Quiet Operation (46 dBA), Inverter Direct Drive Motor, NeveRust\u2122 Stainless Steel Tub, LG ThinQ\u00ae Technology (Wi-Fi)"
+    ]
+  },
+  {
+    "mpn": "PDD415PYYFS",
+    "resolved_brand": "GE",
+    "brand_confidence": "high",
+    "research_status": "found",
+    "sources_count": 12,
+    "is_valid": true,
+    "confidence": "MEDIUM",
+    "confidence_score": 0.72,
+    "attribute_completeness": 0.06666666666666667,
+    "score_breakdown": {
+      "brand_resolution": 1.0,
+      "source_verification": 1.0,
+      "attribute_completeness": 0.06666666666666667,
+      "description_compliance": 1.0,
+      "digital_assets": 1.0
+    },
+    "field_provenance_summary": {
+      "research": 7,
+      "empty": 209,
+      "constant": 21,
+      "input": 7,
+      "derived": 8
+    },
+    "research_pdf_fields": [],
+    "attributes_filled": [
+      "Model: PDD415PYYFS"
+    ]
+  },
+  {
+    "mpn": "KDTS624SBE",
+    "resolved_brand": "Kitchen Aid",
+    "brand_confidence": "medium",
+    "research_status": "found",
+    "sources_count": 15,
+    "is_valid": true,
+    "confidence": "MEDIUM",
+    "confidence_score": 0.68,
+    "attribute_completeness": 0.2,
+    "score_breakdown": {
+      "brand_resolution": 0.6,
+      "source_verification": 1.0,
+      "attribute_completeness": 0.2,
+      "description_compliance": 1.0,
+      "digital_assets": 1.0
+    },
+    "field_provenance_summary": {
+      "research": 14,
+      "empty": 203,
+      "constant": 21,
+      "input": 7,
+      "derived": 7
+    },
+    "research_pdf_fields": [],
+    "attributes_filled": [
+      "Series: Eco Series",
+      "Number of Wash Cycles: 5",
+      "Additional Information: Customizable Handles, Top Controls, Leak Identification System, 5 Cycles"
+    ]
+  }
+]

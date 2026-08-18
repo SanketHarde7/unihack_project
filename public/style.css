@@ -839,6 +839,12 @@ input[type="text"]:focus {
   color: var(--accent-cyan);
 }
 
+.attr-provenance-tag.research_pdf {
+  background: rgba(236, 72, 153, 0.15);
+  color: #f472b6;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
 .attr-provenance-tag.derived {
   background: rgba(139, 92, 246, 0.15);
   color: var(--accent-violet);

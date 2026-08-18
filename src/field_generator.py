@@ -943,6 +943,32 @@ def generate_fields(
 
     not_found = set(specs.get("not_found_fields", []))
 
+    # Collect source texts by source type for provenance attribution
+    pdf_texts = [
+        s.get("content", "").lower()
+        for s in research_result.sources
+        if s.get("source_type") == "pdf" or s.get("url", "").lower().split("?")[0].endswith(".pdf")
+    ]
+    html_texts = [
+        s.get("content", "").lower()
+        for s in research_result.sources
+        if s.get("source_type") != "pdf" and not s.get("url", "").lower().split("?")[0].endswith(".pdf")
+    ]
+
+    def _determine_research_provenance(value_str: str) -> str:
+        """Assign 'research_pdf' if value originates from a PDF technical document, else 'research'."""
+        if not value_str or not pdf_texts:
+            return "research"
+        val_clean = str(value_str).strip().lower()
+        # Check if extracted value is found in any PDF source text
+        if any(val_clean in pt for pt in pdf_texts):
+            if not any(val_clean in ht for ht in html_texts):
+                return "research_pdf"
+            top_src = research_result.sources[0] if research_result.sources else {}
+            if top_src.get("source_type") == "pdf" or top_src.get("url", "").lower().split("?")[0].endswith(".pdf"):
+                return "research_pdf"
+        return "research"
+
     # -------------------------------------------------------------------
     # Layer 3: Populate fields from extracted specs
     # -------------------------------------------------------------------
@@ -950,13 +976,13 @@ def generate_fields(
     # — Manufacturer & Brand —
     if specs.get("manufacturer_name"):
         fields["MANUFACTURER_NAME"] = specs["manufacturer_name"]
-        field_sources["MANUFACTURER_NAME"] = "research"
+        field_sources["MANUFACTURER_NAME"] = _determine_research_provenance(specs["manufacturer_name"])
     else:
         needs_review.append("MANUFACTURER_NAME")
 
     if specs.get("brand_name"):
         fields["BRAND_NAME"] = specs["brand_name"]
-        field_sources["BRAND_NAME"] = "research"
+        field_sources["BRAND_NAME"] = _determine_research_provenance(specs["brand_name"])
     else:
         needs_review.append("BRAND_NAME")
 
@@ -981,7 +1007,7 @@ def generate_fields(
         value = specs.get(spec_key, "")
         if value:
             fields[f"ATTRIBUTE_VALUE {i}"] = str(value)
-            field_sources[f"ATTRIBUTE_VALUE {i}"] = "research"
+            field_sources[f"ATTRIBUTE_VALUE {i}"] = _determine_research_provenance(value)
         elif spec_key in not_found:
             needs_review.append(f"ATTRIBUTE_VALUE {i}")
 
@@ -990,7 +1016,7 @@ def generate_fields(
             uom = specs.get(uom_key, "")
             if uom:
                 fields[f"ATTRIBUTE_UOM {i}"] = uom
-                field_sources[f"ATTRIBUTE_UOM {i}"] = "research"
+                field_sources[f"ATTRIBUTE_UOM {i}"] = _determine_research_provenance(uom)
 
     # — Description fields (dynamic assembly) —
     fields["MOBILE_DESC"] = _build_mobile_desc(specs, mpn)
@@ -1011,37 +1037,41 @@ def generate_fields(
     # — With text —
     if specs.get("with_text"):
         fields["With"] = specs["with_text"]
-        field_sources["With"] = "research"
+        field_sources["With"] = _determine_research_provenance(specs["with_text"])
 
     # — Standards/Approvals —
     if specs.get("standards_approvals"):
         fields["Standard/Approvals"] = specs["standards_approvals"]
-        field_sources["Standard/Approvals"] = "research"
+        field_sources["Standard/Approvals"] = _determine_research_provenance(specs["standards_approvals"])
 
     # — Marketing description —
     if specs.get("marketing_description"):
         fields["MARKETING_DESCRIPTION"] = specs["marketing_description"]
-        field_sources["MARKETING_DESCRIPTION"] = "research"
+        field_sources["MARKETING_DESCRIPTION"] = _determine_research_provenance(specs["marketing_description"])
 
     # — Item features (up to 20) —
     features = specs.get("item_features", [])
     for i, feat in enumerate(features[:20], start=1):
         fields[f"ITEM_FEATURES_{i}"] = feat
-        field_sources[f"ITEM_FEATURES_{i}"] = "research"
+        field_sources[f"ITEM_FEATURES_{i}"] = _determine_research_provenance(feat)
 
     # — Warranty —
     if specs.get("warranty"):
         fields["Warranty"] = specs["warranty"]
-        field_sources["Warranty"] = "research"
+        field_sources["Warranty"] = _determine_research_provenance(specs["warranty"])
 
     # — MFR URL and Ref URLs (from research sources) —
     if research_result.sources:
-        fields["MFR URL"] = research_result.sources[0]["url"]
-        field_sources["MFR URL"] = "research"
+        top_url = research_result.sources[0]["url"]
+        is_pdf_top = top_url.lower().split("?")[0].endswith(".pdf") or research_result.sources[0].get("source_type") == "pdf"
+        fields["MFR URL"] = top_url
+        field_sources["MFR URL"] = "research_pdf" if is_pdf_top else "research"
         for i, source in enumerate(research_result.sources[1:5], start=1):
             col = f"Ref URL {i}"
-            fields[col] = source["url"]
-            field_sources[col] = "research"
+            u = source["url"]
+            is_pdf_ref = u.lower().split("?")[0].endswith(".pdf") or source.get("source_type") == "pdf"
+            fields[col] = u
+            field_sources[col] = "research_pdf" if is_pdf_ref else "research"
 
     # — Product image & spec sheet (deterministic naming convention) —
     brand_clean = _strip_brand_symbols(
@@ -1064,7 +1094,7 @@ def generate_fields(
     # -------------------------------------------------------------------
 
     research_count = sum(
-        1 for v in field_sources.values() if v in ("research", "derived")
+        1 for v in field_sources.values() if v in ("research", "research_pdf", "derived")
     )
 
     if research_count >= 30:

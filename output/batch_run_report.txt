@@ -1,0 +1,50 @@
+================================================================================
+UNIHACK 2026 — FINAL 10-ITEM VERIFICATION BENCHMARK REPORT
+================================================================================
+Date: 2026-08-15 20:31:01
+Target Category: Dishwashers (Appliance Dealers Cooperative Cluster)
+Delivery Schema: 252 Static Columns
+Execution Time: 640.46 seconds (~10.6 minutes)
+Pipeline Status: 100% Valid Records | PDF Extraction Active & Noise-Filtered | Hard Frozen
+
+--------------------------------------------------------------------------------
+1. ONE-LINE SUMMARY TABLE (ALL 10 MPNs — FINAL RUN)
+--------------------------------------------------------------------------------
+
+MPN          | Brand Resolved        | Research Status | Sources | Confidence | Level  | Is Valid? | Outcome / Provenance
+-------------+-----------------------+-----------------+---------+------------+--------+-----------+-------------------------------------------------------------
+KDFM404KPS   | Kitchen Aid (medium)  | found           | 9       | 70.0%      | MEDIUM | ✅ True   | 25 research specs extracted. Compliant & valid.
+PDSH4816AF   | Frigidaire (medium)   | found           | 8       | 62.0%      | MEDIUM | ✅ True   | 7 research specs extracted. Valid & compliant.
+PDT715SYVFS  | GE (high)             | found           | 11      | 76.0%      | HIGH   | ✅ True   | 12 research specs extracted. High confidence & valid.
+LDPH5554D    | LG (high)             | found           | 6       | 84.0%      | HIGH   | ✅ True   | 26 research_pdf specs from official Builder Spec Sheet PDF!
+WDTS7024RZ   | Whirlpool (medium)    | found           | 8       | 70.0%      | MEDIUM | ✅ True   | 14 research + 6 research_pdf specs from owner's manual PDF.
+PDD415PYYFS  | GE (high)             | found           | 12      | 74.0%      | MEDIUM | ✅ True   | 9 research specs extracted. Valid & compliant.
+KDTS424SBE   | Kitchen Aid (high)    | found           | 10      | 76.0%      | HIGH   | ✅ True   | 18 research specs extracted. High confidence & valid.
+KDTS324SPS   | Kitchen Aid (high)    | found           | 11      | 70.0%      | MEDIUM | ✅ True   | 8 research specs extracted. Valid & compliant.
+KDPS624SJP   | Kitchen Aid (medium)  | found           | 11      | 70.0%      | MEDIUM | ✅ True   | 21 research specs extracted. Valid & compliant.
+KDTS624SBE   | Kitchen Aid (medium)  | found           | 15      | 70.0%      | MEDIUM | ✅ True   | 17 research specs extracted. Mobile desc cap enforced.
+
+--------------------------------------------------------------------------------
+2. AGGREGATE STATS
+--------------------------------------------------------------------------------
+
+Metric                          | Value
+--------------------------------+-----------------------------------
+Valid Records (is_valid=true)   | 10 / 10 (100% VALID)
+High Confidence (>=75%)         | 3 / 10 (30%)  [LDPH5554D reached 84%!]
+Medium Confidence (50-74%)      | 7 / 10 (70%)
+Low Confidence (<50%)           | 0 / 10 (0% FAILURE)
+PDF Extraction Yield            | 32 fields enriched via technical PDFs (research_pdf)
+Attribute Extraction Yield      | 10 / 10 items (100%)
+
+--------------------------------------------------------------------------------
+3. PIPELINE HARD-FREEZE CONFIRMATION
+--------------------------------------------------------------------------------
+- Marketing/press-release PDFs successfully filtered out via `PDF_BLACKLIST_PATTERNS`.
+- Technical/spec PDFs prioritized via `PDF_SPEC_PATTERNS`.
+- `LDPH5554D` boosted from 74% to 84% confidence and 0.133 to 0.467 attribute completeness.
+- `WDTS7024RZ` boosted from 62% to 70% confidence via owner's manual PDF parsing.
+- Pipeline code in `src/` is strictly hard-frozen. Ready for final presentation & submission.
+================================================================================
+END OF REPORT
+================================================================================
