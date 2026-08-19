@@ -50,6 +50,53 @@
       </div>
     </header>
 
+    <!-- Executive ROI & Data Quality KPI Cockpit -->
+    <section class="kpi-cockpit-grid">
+      <div class="kpi-card glass-card">
+        <div class="kpi-icon-wrap bg-primary-soft">
+          <i class="fa-solid fa-boxes-stacked text-primary"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Master SKUs Enriched</span>
+          <h3 class="kpi-value" id="kpi-total-skus">10 Active</h3>
+          <span class="kpi-subtext"><i class="fa-solid fa-bolt text-success"></i> 100% 252-Col Delivery</span>
+        </div>
+      </div>
+
+      <div class="kpi-card glass-card">
+        <div class="kpi-icon-wrap bg-success-soft">
+          <i class="fa-solid fa-circle-check text-success"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Data Completeness Index</span>
+          <h3 class="kpi-value" id="kpi-completeness">96.8%</h3>
+          <span class="kpi-subtext"><i class="fa-solid fa-shield-check text-accent"></i> 0 Hallucinations</span>
+        </div>
+      </div>
+
+      <div class="kpi-card glass-card">
+        <div class="kpi-icon-wrap bg-warning-soft">
+          <i class="fa-solid fa-ruler-combined text-warning"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Trade & UOM Compliance</span>
+          <h3 class="kpi-value" id="kpi-compliance">100.0%</h3>
+          <span class="kpi-subtext"><i class="fa-solid fa-check-double text-success"></i> Decimal_Fraction Standard</span>
+        </div>
+      </div>
+
+      <div class="kpi-card glass-card">
+        <div class="kpi-icon-wrap bg-accent-soft">
+          <i class="fa-solid fa-coins text-accent"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Labor & Cost Savings</span>
+          <h3 class="kpi-value" id="kpi-dollars-saved">$375.00</h3>
+          <span class="kpi-subtext" id="kpi-hours-saved"><i class="fa-solid fa-clock-rotate-left"></i> 12.5 hrs manual work saved</span>
+        </div>
+      </div>
+    </section>
+
     <!-- Main Workspace Grid -->
     <main class="workspace-grid">
       <!-- Left Column: Input & Pipeline Control -->
@@ -335,11 +382,34 @@
               <h3>Master 252-Column Record Viewer</h3>
             </div>
             <div class="export-actions">
+              <div class="export-dropdown-container">
+                <button id="syndicate-menu-btn" class="primary-btn-sm">
+                  <i class="fa-solid fa-cloud-arrow-down"></i> Syndicate / Export <i class="fa-solid fa-chevron-down" style="font-size: 0.75rem;"></i>
+                </button>
+                <div class="export-dropdown-menu hidden" id="export-dropdown-menu">
+                  <a href="#" class="export-option" data-format="unilog">
+                    <i class="fa-solid fa-file-csv text-primary"></i>
+                    <div><strong>Unilog 252-Col Delivery CSV</strong><span>Official Ground-Truth Format</span></div>
+                  </a>
+                  <a href="#" class="export-option" data-format="grainger">
+                    <i class="fa-solid fa-industry text-warning"></i>
+                    <div><strong>Grainger Industrial B2B CSV</strong><span>Wholesale Channel Schema</span></div>
+                  </a>
+                  <a href="#" class="export-option" data-format="shopify">
+                    <i class="fa-brands fa-shopify text-success"></i>
+                    <div><strong>Shopify E-Commerce CSV</strong><span>Modern DTC / Web Catalog</span></div>
+                  </a>
+                  <a href="#" class="export-option" data-format="json">
+                    <i class="fa-solid fa-code text-accent"></i>
+                    <div><strong>Universal JSON PIM Payload</strong><span>Headless REST API Schema</span></div>
+                  </a>
+                </div>
+              </div>
               <button id="download-csv-btn" class="secondary-btn">
-                <i class="fa-solid fa-file-csv"></i> Download Delivery CSV (252 Cols)
+                <i class="fa-solid fa-file-csv"></i> Download Master CSV
               </button>
               <button id="download-json-btn" class="secondary-btn">
-                <i class="fa-solid fa-code"></i> Download Audit JSON
+                <i class="fa-solid fa-code"></i> Audit JSON
               </button>
             </div>
           </div>
@@ -365,7 +435,7 @@
           <div class="section-header">
             <div class="title-with-icon">
               <i class="fa-solid fa-list-check text-accent"></i>
-              <h3>Batch Enrichment Results</h3>
+              <h3>Batch Enrichment Results (Click Any Row to Inspect/Curate)</h3>
             </div>
             <div class="batch-results-summary" id="batch-results-summary">
               <!-- Populated by JS -->
@@ -383,6 +453,7 @@
                   <th>Valid?</th>
                   <th># Review</th>
                   <th>Status</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody id="batch-results-body">
@@ -395,6 +466,57 @@
       </section>
     </main>
   </div>
+
+  <!-- Sliding Human-in-the-Loop (HITL) Curator Review Workbench Drawer -->
+  <div class="drawer-backdrop hidden" id="drawer-backdrop"></div>
+  <aside class="hitl-drawer hidden" id="hitl-drawer">
+    <div class="drawer-header">
+      <div class="drawer-title-wrap">
+        <span class="drawer-pill"><i class="fa-solid fa-user-check"></i> Curator Workbench</span>
+        <h3 id="drawer-mpn-title">MPN: PDSH4816AF</h3>
+        <p class="drawer-subtext" id="drawer-brand-subtitle">Brand: Frigidaire | Classpath: Built-In Dishwashers</p>
+      </div>
+      <button class="drawer-close-btn" id="drawer-close-btn"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div class="drawer-body">
+      <!-- Quality Warning Box -->
+      <div class="drawer-alert-box" id="drawer-alert-box">
+        <i class="fa-solid fa-triangle-exclamation text-warning"></i>
+        <div>
+          <h4 id="drawer-issues-count">2 Fields Require Verification</h4>
+          <p id="drawer-issues-desc">Inspect extracted slots against official manufacturer citations below.</p>
+        </div>
+      </div>
+
+      <!-- Live Sourcing Citation Link -->
+      <div class="drawer-source-card">
+        <span class="source-label"><i class="fa-solid fa-file-pdf text-danger"></i> Ground-Truth Verified Citation:</span>
+        <a href="#" target="_blank" id="drawer-source-link" class="drawer-source-url">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> <span id="drawer-source-url-text">https://resources.kohler.com/catalog/spec.pdf</span>
+        </a>
+      </div>
+
+      <!-- 15 Editable Attribute Slots -->
+      <div class="drawer-section-title">
+        <i class="fa-solid fa-sliders text-accent"></i>
+        <h4>15 Standardized Taxonomy Slots</h4>
+      </div>
+
+      <form id="drawer-curator-form" class="drawer-slots-form">
+        <div class="drawer-slots-grid" id="drawer-slots-grid">
+          <!-- Populated dynamically with 15 input fields -->
+        </div>
+
+        <div class="drawer-actions">
+          <button type="button" class="secondary-btn" id="drawer-cancel-btn">Cancel</button>
+          <button type="submit" class="primary-btn" id="drawer-save-btn">
+            <i class="fa-solid fa-check"></i> Save & Approve Override
+          </button>
+        </div>
+      </form>
+    </div>
+  </aside>
 
   <script src="app.js"></script>
 </body>

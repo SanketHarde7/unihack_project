@@ -1,0 +1,112 @@
+{
+  "supervisor_evaluation": [
+    {
+      "mpn": "KDTS424SBE",
+      "desc": "KDTS424SBE Kitchen Aid Dishwasher Bk",
+      "brand_resolved": "Kitchen Aid",
+      "category": "dishwasher",
+      "classpath": "Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers",
+      "confidence": "MEDIUM",
+      "confidence_score": 0.74,
+      "is_valid": true,
+      "invoice_desc": "DISHWASHER 44DBA",
+      "mobile_desc": "Whirlpool Corporation KitchenAid, Dishwasher, KDTS424SBE",
+      "short_desc": "KitchenAid\u00ae KDTS424SBE Dishwasher",
+      "sources_count": 10,
+      "issues": [
+        {
+          "field": "MOBILE_DESC",
+          "issue_type": "warning",
+          "message": "Length 56 is under 60 chars target",
+          "rule_code": "RULE_DESC_07"
+        }
+      ],
+      "needs_review_count": 21
+    },
+    {
+      "mpn": "K-596-CP",
+      "desc": "Kohler Simplice Pull-Down Kitchen Faucet Polished Chrome",
+      "brand_resolved": "Kohler",
+      "category": "faucet",
+      "classpath": "Plumbing Fixtures>Faucets>Kitchen Faucets",
+      "confidence": "HIGH",
+      "confidence_score": 0.76,
+      "is_valid": true,
+      "invoice_desc": "KITCHEN PRE",
+      "mobile_desc": "KOHLER, Kitchen Faucet, Simplice\u00ae Series, K-596-CP",
+      "short_desc": "KOHLER\u00ae Simplice\u00ae Series K-596-CP Kitchen Faucet, Premium metal construction for durability and reliability",
+      "sources_count": 10,
+      "issues": [
+        {
+          "field": "MOBILE_DESC",
+          "issue_type": "warning",
+          "message": "Length 50 is under 60 chars target",
+          "rule_code": "RULE_DESC_07"
+        }
+      ],
+      "needs_review_count": 21
+    },
+    {
+      "mpn": "2804-20",
+      "desc": "Milwaukee M18 FUEL 1/2 in. Hammer Drill Bare Tool",
+      "brand_resolved": "Milwaukee",
+      "category": "tool",
+      "classpath": "Tools & Hardware>Power Tools>Drills & Drivers",
+      "confidence": "HIGH",
+      "confidence_score": 0.76,
+      "is_valid": true,
+      "invoice_desc": "POWER",
+      "mobile_desc": "Milwaukee, Power Tool, M18 FUEL\u2122 Series, 2804-20",
+      "short_desc": "Milwaukee\u00ae M18 FUEL\u2122 Series 2804-20 Power Tool",
+      "sources_count": 12,
+      "issues": [
+        {
+          "field": "MOBILE_DESC",
+          "issue_type": "warning",
+          "message": "Length 48 is under 60 chars target",
+          "rule_code": "RULE_DESC_07"
+        }
+      ],
+      "needs_review_count": 22
+    },
+    {
+      "mpn": "HOM250",
+      "desc": "Square D Homeline 50A 2-Pole Circuit Breaker 120/240V",
+      "brand_resolved": "Square D",
+      "category": "electrical",
+      "classpath": "Electrical Distribution>Circuit Breakers>Molded Case Circuit Breakers",
+      "confidence": "HIGH",
+      "confidence_score": 0.82,
+      "is_valid": true,
+      "invoice_desc": "CIRCUIT 120/240V 50A",
+      "mobile_desc": "Schneider Electric Square D, Circuit Breaker, Homeline Series, HOM250",
+      "short_desc": "Square D\u2122 Homeline Series HOM250 Circuit Breaker",
+      "sources_count": 8,
+      "issues": [],
+      "needs_review_count": 17
+    },
+    {
+      "mpn": "LFXS26973S",
+      "desc": "LG 26 cu. ft. French Door Refrigerator Stainless Steel",
+      "brand_resolved": "LG",
+      "category": "refrigerator",
+      "classpath": "Appliances & Consumer Electronics>Kitchen Appliances>Refrigerators",
+      "confidence": "MEDIUM",
+      "confidence_score": 0.74,
+      "is_valid": true,
+      "invoice_desc": "REFRIGERATOR",
+      "mobile_desc": "LG, Refrigerator, LFXS26973S",
+      "short_desc": "LG\u00ae LFXS26973S Refrigerator",
+      "sources_count": 8,
+      "issues": [
+        {
+          "field": "MOBILE_DESC",
+          "issue_type": "warning",
+          "message": "Length 28 is under 60 chars target",
+          "rule_code": "RULE_DESC_07"
+        }
+      ],
+      "needs_review_count": 23
+    }
+  ]
+}

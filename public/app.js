@@ -629,7 +629,18 @@ window.addEventListener("DOMContentLoaded", () => {
       <td class="valid-cell ${validClass}">${validText}</td>
       <td>${result.needs_review_fields_count || 0}</td>
       <td><span class="status-tag ${statusClass}">${result.status === "success" ? "OK" : "ERR"}</span></td>
+      <td>
+        <button class="curate-btn primary-btn-sm" style="padding: 4px 8px; font-size: 10px;" data-mpn="${result.mpn}">
+          <i class="fa-solid fa-pen-to-square"></i> Curate
+        </button>
+      </td>
     `;
+
+    const curateBtn = tr.querySelector(".curate-btn");
+    curateBtn.addEventListener("click", () => {
+      openCuratorDrawer(result.mpn);
+    });
+
     batchResultsBody.appendChild(tr);
   }
 
@@ -646,5 +657,218 @@ window.addEventListener("DOMContentLoaded", () => {
       ${medCount > 0 ? `<span class="batch-summary-pill medium">${medCount} MEDIUM</span>` : ""}
       ${lowCount > 0 ? `<span class="batch-summary-pill low">${lowCount} LOW</span>` : ""}
     `;
+    fetchMetrics();
   }
 })();
+
+// ==========================================================================
+// Executive ROI KPI Fetcher & Multi-Channel Syndication Hub
+// ==========================================================================
+
+async function fetchMetrics() {
+  try {
+    const res = await fetch(`${API_BASE}/api/metrics`);
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const kpiTotal = document.getElementById("kpi-total-skus");
+    const kpiComp = document.getElementById("kpi-completeness");
+    const kpiDollars = document.getElementById("kpi-dollars-saved");
+    const kpiHours = document.getElementById("kpi-hours-saved");
+
+    if (kpiTotal) kpiTotal.textContent = `${data.total_products} Active`;
+    if (kpiComp) kpiComp.textContent = `${data.completeness_score}%`;
+    if (kpiDollars) kpiDollars.textContent = `$${data.dollars_saved.toFixed(2)}`;
+    if (kpiHours) kpiHours.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> ${data.time_saved_hours} hrs manual work saved`;
+  } catch (err) {
+    // Graceful fallback for offline / static mode
+  }
+}
+
+// Initial fetch on DOM load
+document.addEventListener("DOMContentLoaded", fetchMetrics);
+
+// Syndication Dropdown Menu Toggle
+const syndicateBtn = document.getElementById("syndicate-menu-btn");
+const exportDropdown = document.getElementById("export-dropdown-menu");
+
+if (syndicateBtn && exportDropdown) {
+  syndicateBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    exportDropdown.classList.toggle("hidden");
+  });
+
+  document.addEventListener("click", () => {
+    exportDropdown.classList.add("hidden");
+  });
+
+  document.querySelectorAll(".export-option").forEach((opt) => {
+    opt.addEventListener("click", (e) => {
+      e.preventDefault();
+      const format = opt.getAttribute("data-format");
+      window.location.href = `${API_BASE}/api/catalog/export/${format}`;
+      exportDropdown.classList.add("hidden");
+    });
+  });
+}
+
+// ==========================================================================
+// Human-in-the-Loop (HITL) Curator Review Workbench Drawer
+// ==========================================================================
+
+const drawer = document.getElementById("hitl-drawer");
+const drawerBackdrop = document.getElementById("drawer-backdrop");
+const drawerCloseBtn = document.getElementById("drawer-close-btn");
+const drawerCancelBtn = document.getElementById("drawer-cancel-btn");
+const drawerMpnTitle = document.getElementById("drawer-mpn-title");
+const drawerBrandSubtitle = document.getElementById("drawer-brand-subtitle");
+const drawerAlertBox = document.getElementById("drawer-alert-box");
+const drawerIssuesCount = document.getElementById("drawer-issues-count");
+const drawerSourceLink = document.getElementById("drawer-source-link");
+const drawerSourceUrlText = document.getElementById("drawer-source-url-text");
+const drawerSlotsGrid = document.getElementById("drawer-slots-grid");
+const drawerCuratorForm = document.getElementById("drawer-curator-form");
+
+let activeCuratorMpn = "";
+
+async function openCuratorDrawer(mpn) {
+  activeCuratorMpn = mpn;
+  drawer.classList.remove("hidden");
+  drawerBackdrop.classList.remove("hidden");
+
+  drawerMpnTitle.textContent = `MPN: ${mpn}`;
+  drawerBrandSubtitle.textContent = `Loading ground-truth specifications...`;
+  drawerSlotsGrid.innerHTML = `<div style="color:var(--text-dim); text-align:center; padding:20px;">Fetching from persistent database...</div>`;
+
+  try {
+    let itemData = null;
+    if (currentRecord && currentRecord.mpn === mpn) {
+      itemData = currentRecord;
+    } else {
+      const res = await fetch(`${API_BASE}/api/catalog`);
+      if (res.ok) {
+        const catalog = await res.json();
+        itemData = catalog.items.find((i) => i.mpn === mpn || i.fields?.Mfg_Part_Num === mpn);
+      }
+    }
+
+    if (!itemData) {
+      drawerBrandSubtitle.textContent = `Brand: Auto-Detected`;
+      renderDrawerSlots({}, [], "https://www.google.com");
+      return;
+    }
+
+    const fields = itemData.fields || {};
+    const sources = itemData.sources || [];
+    const val = itemData.validation || {};
+    const brand = fields.BRAND_NAME || itemData.brand || "Resolved Brand";
+    const classpath = fields.Classpath || "Appliances";
+
+    drawerBrandSubtitle.textContent = `Brand: ${brand} | Classpath: ${classpath}`;
+
+    const issues = val.issues || [];
+    if (issues.length > 0) {
+      drawerAlertBox.classList.remove("hidden");
+      drawerIssuesCount.textContent = `${issues.length} Field(s) Flagged for Verification`;
+    } else {
+      drawerAlertBox.classList.add("hidden");
+    }
+
+    const citationUrl = sources.length > 0 ? sources[0] : (fields["MFR URL"] || "#");
+    drawerSourceLink.href = citationUrl;
+    drawerSourceUrlText.textContent = citationUrl;
+
+    renderDrawerSlots(fields, val.needs_review_fields || []);
+  } catch (err) {
+    drawerSlotsGrid.innerHTML = `<div style="color:var(--accent-rose)">Failed to load item: ${err.message}</div>`;
+  }
+}
+
+function renderDrawerSlots(fields, needsReviewList) {
+  drawerSlotsGrid.innerHTML = "";
+
+  for (let i = 1; i <= 15; i++) {
+    const label = fields[`ATTRIBUTE_LABEL ${i}`] || `Attribute Slot ${i}`;
+    const valKey = `ATTRIBUTE_VALUE ${i}`;
+    const uomKey = `ATTRIBUTE_UOM ${i}`;
+    const val = fields[valKey] || "";
+    const uom = fields[uomKey] || "";
+
+    const isFlagged = needsReviewList.includes(valKey) || (!val && i <= 8);
+    const badgeText = isFlagged ? "Review" : "Verified";
+    const badgeClass = isFlagged ? "badge-low" : "badge-high";
+
+    const slotDiv = document.createElement("div");
+    slotDiv.className = "drawer-slot-item";
+    slotDiv.innerHTML = `
+      <div class="drawer-slot-header">
+        <label class="drawer-slot-label">Slot ${i}: ${label}</label>
+        <span class="drawer-slot-confidence conf-badge ${badgeClass}">${badgeText}</span>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" class="drawer-slot-input" style="flex:2" name="${valKey}" value="${val}" placeholder="Value (e.g. 120, 50-1/4, Stainless Steel)">
+        <input type="text" class="drawer-slot-input" style="flex:1" name="${uomKey}" value="${uom}" placeholder="UOM (e.g. V, A, in, dBA)">
+      </div>
+    `;
+    drawerSlotsGrid.appendChild(slotDiv);
+  }
+}
+
+function closeCuratorDrawer() {
+  drawer.classList.add("hidden");
+  drawerBackdrop.classList.add("hidden");
+}
+
+if (drawerCloseBtn) drawerCloseBtn.addEventListener("click", closeCuratorDrawer);
+if (drawerCancelBtn) drawerCancelBtn.addEventListener("click", closeCuratorDrawer);
+if (drawerBackdrop) drawerBackdrop.addEventListener("click", closeCuratorDrawer);
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !drawer.classList.contains("hidden")) {
+    closeCuratorDrawer();
+  }
+});
+
+// Save & Override Curator Edits
+if (drawerCuratorForm) {
+  drawerCuratorForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(drawerCuratorForm);
+    const updatedFields = {};
+    for (const [k, v] of formData.entries()) {
+      updatedFields[k] = v.trim();
+    }
+
+    const saveBtn = document.getElementById("drawer-save-btn");
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/curator/override`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: json.stringify({
+          mpn: activeCuratorMpn,
+          fields: updatedFields,
+          approved: true,
+        }),
+      });
+
+      if (res.ok) {
+        saveBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Approved!`;
+        setTimeout(() => {
+          closeCuratorDrawer();
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = `<i class="fa-solid fa-check"></i> Save & Approve Override`;
+          fetchMetrics();
+        }, 600);
+      } else {
+        throw new Error("Server responded with error");
+      }
+    } catch (err) {
+      alert(`Could not save curator override: ${err.message}`);
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = `<i class="fa-solid fa-check"></i> Save & Approve Override`;
+    }
+  });
+}

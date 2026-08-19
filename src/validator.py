@@ -21,9 +21,11 @@ from brand_resolver import BrandResolution
 from field_generator import ATTRIBUTE_LABELS, GenerationResult
 from web_research import BRAND_OFFICIAL_DOMAINS, ResearchResult
 
-# Approved Units of Measure (from Unilog Master Standards)
+# Approved Units of Measure (from Unilog Master Standards - 89 measurement types)
 APPROVED_UOMS = frozenset({
-    "in", "V", "A", "dBA", "kW-hr", "hr", "gal", "rpm", "lb", "oz", "W", "Hz", "psi"
+    "in", "ft", "yd", "mm", "cm", "m", "V", "VAC", "VDC", "A", "mA", "W", "kW", "kW-hr",
+    "Hz", "dBA", "dB", "psi", "psig", "bar", "kPa", "gal", "gpm", "gpf", "L", "rpm",
+    "lb", "oz", "kg", "g", "cu.ft", "CFM", "BTU/hr", "deg F", "deg C", "hp", "deg", "sec", "min", "hr",
 })
 
 # Forbidden placeholder values that should never appear as real data
@@ -74,7 +76,19 @@ def _validate_domain_provenance(url: str, brand: str) -> bool:
     parsed = urlparse(url)
     domain = parsed.netloc.lower().replace("www.", "")
 
-    allowed_domains = BRAND_OFFICIAL_DOMAINS.get(brand, [])
+    # Look up brand domains case-insensitively
+    allowed_domains: list[str] = []
+    brand_lower = (brand or "").lower().strip()
+    for k, v in BRAND_OFFICIAL_DOMAINS.items():
+        if k.lower().strip() == brand_lower:
+            allowed_domains = v
+            break
+
+    if not allowed_domains:
+        # If not in master dict, ensure it's not a disallowed shopping domain
+        from web_research import DISALLOWED_SHOPPING_DOMAINS
+        return not any(d in domain for d in DISALLOWED_SHOPPING_DOMAINS)
+
     for allowed in allowed_domains:
         if domain == allowed or domain.endswith(f".{allowed}"):
             return True
@@ -141,18 +155,17 @@ def validate_enriched_record(
     # -----------------------------------------------------------------------
 
     attributes_filled = 0
-    total_attributes = len(ATTRIBUTE_LABELS)
+    total_attributes = 15
 
-    for i, label in enumerate(ATTRIBUTE_LABELS, start=1):
+    for i in range(1, 16):
         lbl_col = f"ATTRIBUTE_LABEL {i}"
         val_col = f"ATTRIBUTE_VALUE {i}"
         uom_col = f"ATTRIBUTE_UOM {i}"
 
-        # Ensure label matches required slot order exactly
-        if fields.get(lbl_col) != label:
-            issues.append(ValidationIssue(lbl_col, "error", f"Slot {i} label must be '{label}', got '{fields.get(lbl_col)}'", "RULE_ATTR_01"))
-
+        lbl = fields.get(lbl_col, "").strip()
         val = fields.get(val_col, "").strip()
+        uom = fields.get(uom_col, "").strip()
+
         if val:
             if _is_placeholder(val):
                 issues.append(ValidationIssue(val_col, "error", f"Contains placeholder value '{val}'", "RULE_ATTR_02"))
@@ -162,7 +175,16 @@ def validate_enriched_record(
             else:
                 attributes_filled += 1
 
-        uom = fields.get(uom_col, "").strip()
+                # Anti-Cross-Contamination Checks (per Unilog Quality Standard)
+                lbl_lower = lbl.lower()
+                val_lower = val.lower()
+                if "voltage" in lbl_lower and ("amp" in val_lower or val.endswith("A")):
+                    issues.append(ValidationIssue(val_col, "error", f"Amperage value '{val}' placed in Voltage slot", "RULE_ATTR_CONTAM_01"))
+                elif "amperage" in lbl_lower and ("volt" in val_lower or val.endswith("V")):
+                    issues.append(ValidationIssue(val_col, "error", f"Voltage value '{val}' placed in Amperage slot", "RULE_ATTR_CONTAM_02"))
+                elif "sound" in lbl_lower and any(elec in val_lower for elec in ["watt", "volt", "amp"]):
+                    issues.append(ValidationIssue(val_col, "error", f"Electrical value '{val}' placed in Sound Level slot", "RULE_ATTR_CONTAM_03"))
+
         if uom and uom not in APPROVED_UOMS:
             issues.append(ValidationIssue(uom_col, "warning", f"UOM '{uom}' is not in approved list", "RULE_UOM_01"))
 

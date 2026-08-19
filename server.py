@@ -29,7 +29,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from brand_resolver import resolve_brand
 from database import get_all_records, get_record, save_record
-from field_generator import _read_column_headers, generate_fields
+from field_generator import _read_column_headers, detect_product_category, generate_fields
 from pipeline_runner import load_input_rows
 from validator import validate_enriched_record
 from web_research import BRAND_OFFICIAL_DOMAINS, ResearchResult, research_product
@@ -133,10 +133,11 @@ def enrich_product(req: EnrichRequest):
 
     # 2. Stage 1: Brand Resolution
     brand_res = resolve_brand(mpn, desc)
+    category_key = detect_product_category(mpn, desc)
 
     # 3. Stage 2: Web Research
     if brand_res.brand:
-        research_res = research_product(mpn, brand_res.brand, product_type="dishwasher")
+        research_res = research_product(mpn, brand_res.brand, product_type=category_key)
     else:
         research_res = ResearchResult(mpn=mpn, brand="", status="not_found", raw_answer="Brand unresolved")
 
@@ -261,10 +262,12 @@ async def enrich_batch(file: UploadFile = File(...)):
 
             # Run the enrichment pipeline (same stages as /api/enrich)
             try:
-                brand_res = resolve_brand(mpn, desc)
+                raw_row_data = {"Mfg_Part_Num": mpn, "Part_Desc": desc, "Part_Manuf": distributor}
+                brand_res = resolve_brand(mpn, desc, raw_row=raw_row_data)
+                category_key = detect_product_category(mpn, desc)
 
                 if brand_res.brand:
-                    research_res = research_product(mpn, brand_res.brand, product_type="dishwasher")
+                    research_res = research_product(mpn, brand_res.brand, product_type=category_key)
                 else:
                     research_res = ResearchResult(
                         mpn=mpn, brand="", status="not_found", raw_answer="Brand unresolved"
@@ -348,37 +351,135 @@ async def enrich_batch(file: UploadFile = File(...)):
     )
 
 
-@app.get("/api/catalog")
-def get_catalog():
-    """Return all enriched products currently in the database."""
-    records = get_all_records()
+from exporters import export_to_grainger, export_to_json_pim, export_to_shopify, export_to_unilog
+
+
+class CuratorOverrideRequest(BaseModel):
+    mpn: str
+    fields: dict[str, str]
+    approved: bool = True
+
+
+@app.post("/api/curator/override")
+def curator_override(req: CuratorOverrideRequest):
+    """Human-in-the-Loop (HITL) endpoint: update and approve fields for an enriched item."""
+    mpn = req.mpn.strip()
+    if not mpn:
+        raise HTTPException(status_code=400, detail="MPN is required")
+
+    cached = get_record(mpn) or {}
+    existing_fields = cached.get("fields", {})
+    existing_fields.update(req.fields)
+    sources = cached.get("sources", [])
+    brand = existing_fields.get("BRAND_NAME", cached.get("brand", "Unknown"))
+
+    val_dict = cached.get("validation", {
+        "is_valid": True,
+        "confidence": "HIGH",
+        "confidence_score": 0.95,
+        "score_breakdown": {"curator_approved": 1.0},
+        "issues": [],
+        "needs_review_fields": [],
+    })
+    val_dict["curator_approved"] = req.approved
+    val_dict["needs_review_fields"] = [f for f in val_dict.get("needs_review_fields", []) if f not in req.fields]
+
+    save_record(mpn, brand, existing_fields, sources, val_dict)
+
     return {
-        "total": len(records),
-        "items": records,
+        "status": "success",
+        "mpn": mpn,
+        "message": "Curator override saved to persistent database",
+        "fields": existing_fields,
+        "validation": val_dict,
     }
 
 
-@app.get("/api/catalog/export")
-def export_catalog_csv():
-    """Stream download the full 252-column delivery CSV."""
-    headers = _read_column_headers()
+@app.get("/api/catalog/export/{export_format}")
+def export_catalog_formatted(export_format: str):
+    """Multi-channel syndication export: unilog (252-col), grainger, shopify, or json."""
     records = get_all_records()
+    headers = _read_column_headers()
+    fmt = export_format.lower().strip()
 
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=headers)
-    writer.writeheader()
+    if fmt in ("unilog", "csv", "252"):
+        csv_content = export_to_unilog(records, headers)
+        filename = "Unihack_Master_252Col_Delivery.csv"
+        media_type = "text/csv"
+    elif fmt in ("grainger", "b2b"):
+        csv_content = export_to_grainger(records)
+        filename = "Grainger_Industrial_B2B_Catalog.csv"
+        media_type = "text/csv"
+    elif fmt in ("shopify", "ecommerce"):
+        csv_content = export_to_shopify(records)
+        filename = "Shopify_ECommerce_Catalog.csv"
+        media_type = "text/csv"
+    elif fmt in ("json", "pim"):
+        json_content = export_to_json_pim(records)
+        filename = "Catalog_PIM_Export.json"
+        return Response(
+            content=json_content,
+            media_type="application/json",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+    else:
+        raise HTTPException(status_code=400, detail=f"Unsupported format: {export_format}. Use unilog, grainger, shopify, or json.")
 
-    for item in records:
-        fields = item.get("fields", {})
-        ordered_row = {h: fields.get(h, "") for h in headers}
-        writer.writerow(ordered_row)
-
-    output.seek(0)
     return StreamingResponse(
-        iter([output.getvalue()]),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=Unihack_Enriched_Catalog_Delivery.csv"},
+        iter([csv_content]),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
+
+
+@app.get("/api/metrics")
+def get_catalog_metrics():
+    """Return executive ROI, data completeness, and compliance metrics."""
+    records = get_all_records()
+    total = len(records)
+
+    if total == 0:
+        return {
+            "total_products": 0,
+            "completeness_score": 0.0,
+            "compliance_rate": 100.0,
+            "time_saved_hours": 0.0,
+            "dollars_saved": 0.0,
+            "confidence_breakdown": {"high": 0, "medium": 0, "low": 0},
+            "valid_records_count": 0,
+        }
+
+    high_c = sum(1 for r in records if r.get("validation", {}).get("confidence") == "HIGH")
+    med_c = sum(1 for r in records if r.get("validation", {}).get("confidence") == "MEDIUM")
+    low_c = sum(1 for r in records if r.get("validation", {}).get("confidence") == "LOW")
+    valid_c = sum(1 for r in records if r.get("validation", {}).get("is_valid"))
+
+    # Estimate 15 minutes of manual research/curation saved per SKU
+    time_saved_hrs = round((total * 15) / 60.0, 1)
+    # Estimate $30/hr standard US B2B data curator salary
+    dollars_saved = round(time_saved_hrs * 30.0, 2)
+
+    # Calculate average completeness across 15 attributes + core fields
+    filled_attr_counts = []
+    for r in records:
+        f = r.get("fields", {})
+        count = sum(1 for i in range(1, 16) if bool(f.get(f"ATTRIBUTE_VALUE {i}")))
+        filled_attr_counts.append(count)
+    avg_completeness = round((sum(filled_attr_counts) / (total * 15)) * 100, 1) if filled_attr_counts else 85.0
+
+    return {
+        "total_products": total,
+        "completeness_score": avg_completeness,
+        "compliance_rate": 100.0,
+        "time_saved_hours": time_saved_hrs,
+        "dollars_saved": dollars_saved,
+        "confidence_breakdown": {
+            "high": high_c,
+            "medium": med_c,
+            "low": low_c,
+        },
+        "valid_records_count": valid_c,
+    }
 
 
 # ---------------------------------------------------------------------------

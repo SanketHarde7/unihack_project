@@ -31,18 +31,142 @@ from tavily import TavilyClient
 load_dotenv()
 
 # Known official domains per brand. Sourcing-rule compliance strictly depends
-# on domain locking.
+# on domain locking to official manufacturer sites (never retail marketplaces).
 BRAND_OFFICIAL_DOMAINS: dict[str, list[str]] = {
-    "GE": ["geappliances.com"],
+    # — Major Appliances —
+    "GE": ["geappliances.com", "products.geappliances.com"],
     "LG": ["lg.com"],
-    "Kitchen Aid": ["kitchenaid.com"],
-    "Frigidaire": ["frigidaire.com"],
-    "Whirlpool": ["whirlpool.com"],
-    "Speed Queen": ["speedqueen.com"],
-    "Maytag": ["maytag.com"],
+    "Kitchen Aid": ["kitchenaid.com", "producthelp.kitchenaid.com"],
+    "Frigidaire": ["frigidaire.com", "owner.frigidaire.com"],
+    "Whirlpool": ["whirlpool.com", "producthelp.whirlpool.com"],
+    "Speed Queen": ["speedqueen.com", "speedqueencommercial.com"],
+    "Maytag": ["maytag.com", "producthelp.maytag.com"],
     "Samsung": ["samsung.com"],
-    "Bosch": ["bosch-home.com"],
+    "Bosch": ["bosch-home.com", "boschtools.com", "bosch-industrial.com"],
+    "Electrolux": ["electrolux.com", "electroluxappliances.com"],
+    "Haier": ["haierappliances.com", "haier.com"],
+    "Miele": ["mieleusa.com", "miele.com"],
+    "JennAir": ["jennair.com"],
+    "Amana": ["amana.com"],
+    "Viking": ["vikingrange.com"],
+    "Thermador": ["thermador.com"],
+    "Sub-Zero": ["subzero-wolf.com"],
+    "Wolf": ["subzero-wolf.com"],
+    "Dacor": ["dacor.com"],
+    "Fisher & Paykel": ["fisherpaykel.com"],
+    "Sharp": ["sharpusa.com"],
+    "Panasonic": ["na.panasonic.com", "panasonic.com"],
+    "Danby": ["danby.com"],
+    "Avanti": ["avantiproducts.com"],
+
+    # — Plumbing Fixtures & Faucets (FAUCETS_LOV) —
+    "Kohler": ["kohler.com", "us.kohler.com"],
+    "Moen": ["moen.com", "pro.moen.com"],
+    "Delta": ["deltafaucet.com", "worldwide.deltafaucet.com"],
+    "American Standard": ["americanstandard-us.com"],
+    "Pfister": ["pfisterfaucets.com"],
+    "Grohe": ["grohe.us", "grohe.com"],
+    "Hansgrohe": ["hansgrohe-usa.com", "hansgrohe.com"],
+    "TOTO": ["totousa.com", "toto.com"],
+    "Sloan": ["sloan.com"],
+    "Zurn": ["zurn.com"],
+    "Watts": ["watts.com"],
+    "Elkay": ["elkay.com"],
+    "Gerber": ["gerber-us.com"],
+    "Symmons": ["symmons.com"],
+    "Chicago Faucets": ["chicagofaucets.com"],
+    "Speakman": ["speakman.com"],
+    "InSinkErator": ["insinkerator.emerson.com", "insinkerator.com"],
+    "Mansfield": ["mansfieldplumbing.com"],
+
+    # — Pipes, Valves & Fittings (Fittings_LOV) —
+    "Apollo Valves": ["apollovalves.com"],
+    "Nibco": ["nibco.com"],
+    "Charlotte Pipe": ["charlottepipe.com"],
+    "SharkBite": ["sharkbite.com"],
+    "Mueller": ["muellerindustries.com", "muellerstreamline.com"],
+    "Viega": ["viega.us", "viega.com"],
+    "Anvil": ["asc-es.com", "anvilintl.com"],
+    "Victaulic": ["victaulic.com"],
+    "Dixon Valve": ["dixonvalve.com"],
+    "Parker": ["parker.com"],
+    "Spears": ["spearsmfg.com"],
+    "IPEX": ["ipexna.com"],
+    "Legend Valve": ["legendvalve.com"],
+
+    # — HVAC & Water Heating —
+    "Carrier": ["carrier.com", "carrierenterprise.com"],
+    "Trane": ["trane.com"],
+    "Rheem": ["rheem.com", "resource.rheem.com"],
+    "Ruud": ["ruud.com"],
+    "Lennox": ["lennox.com", "lennoxpros.com"],
+    "Goodman": ["goodmanmfg.com"],
+    "York": ["york.com"],
+    "Daikin": ["daikinapplied.com", "daikin.com"],
+    "Mitsubishi Electric": ["mitsubishicomfort.com"],
+    "A.O. Smith": ["hotwater.com", "aosmith.com"],
+    "Bradford White": ["bradfordwhite.com"],
+    "Rinnai": ["rinnai.us"],
+    "Navien": ["navieninc.com"],
+    "Honeywell": ["honeywellhome.com", "resideo.com", "honeywell.com"],
+    "White-Rodgers": ["copeland.com", "emerson.com"],
+    "Copeland": ["copeland.com"],
+    "Broan-NuTone": ["broan-nutone.com"],
+
+    # — Electrical Distribution & Automation —
+    "Square D": ["se.com", "squared.com"],
+    "Schneider Electric": ["se.com"],
+    "Eaton": ["eaton.com"],
+    "Siemens": ["siemens.com", "usa.siemens.com"],
+    "Leviton": ["leviton.com"],
+    "Hubbell": ["hubbell.com"],
+    "Legrand": ["legrand.us"],
+    "Lutron": ["lutron.com"],
+    "ABB": ["abb.com", "electrification.us.abb.com"],
+    "Rockwell Automation": ["rockwellautomation.com"],
+    "Southwire": ["southwire.com"],
+    "Ideal Industries": ["idealind.com"],
+
+    # — Tools, Hardware & Industrial Supplies —
+    "Milwaukee": ["milwaukeetool.com"],
+    "DeWalt": ["dewalt.com"],
+    "Makita": ["makitatools.com"],
+    "Klein Tools": ["kleintools.com"],
+    "Fluke": ["fluke.com"],
+    "RIDGID": ["ridgid.com"],
+    "3M": ["3m.com"],
+    "Stanley": ["stanleytools.com", "stanleyblackanddecker.com"],
+    "Craftsman": ["craftsman.com"],
+    "Greenlee": ["greenlee.com"],
+    "Channellock": ["channellock.com"],
+    "Irwin": ["irwin.com"],
+    "Lenox Tools": ["lenoxtools.com"],
 }
+
+# Strict blacklist of consumer shopping/e-commerce marketplaces (disallowed per Unilog guidelines)
+DISALLOWED_SHOPPING_DOMAINS = frozenset({
+    "amazon.com",
+    "ebay.com",
+    "walmart.com",
+    "homedepot.com",
+    "lowes.com",
+    "target.com",
+    "wayfair.com",
+    "grainger.com",
+    "zoro.com",
+    "alibaba.com",
+    "aliexpress.com",
+    "bestbuy.com",
+    "costco.com",
+    "menards.com",
+    "overstock.com",
+    "sears.com",
+    "build.com",
+    "ferguson.com",
+    "supplyhouse.com",
+    "appliancesconnection.com",
+    "ajmadison.com",
+})
 
 # URL noise patterns to filter out (troubleshooting, registration, generic blogs, press releases)
 URL_BLACKLIST_PATTERNS = [
@@ -244,13 +368,47 @@ def _fetch_full_page(url: str, timeout: int = 10) -> tuple[str, str]:
 # Multi-query & URL Ranking
 # ---------------------------------------------------------------------------
 
-def _build_queries(mpn: str, brand: str, product_type: str) -> list[str]:
-    """Targeted search queries for deep spec discovery."""
+def _build_queries(mpn: str, brand: str, product_type: str = "") -> list[str]:
+    """Targeted search queries for deep spec discovery tailored to product type."""
+    type_clean = (product_type or "").strip()
+    if type_clean and type_clean.lower() not in ("item", "general", "appliance"):
+        type_str = f" {type_clean}"
+    else:
+        type_str = ""
     return [
-        f"{brand} {mpn} specifications",
-        f"{brand} {mpn} installation guide dimensions",
-        f"{brand} {mpn} spec sheet PDF",
+        f"{brand} {mpn}{type_str} specifications",
+        f"{brand} {mpn}{type_str} dimensions technical data sheet",
+        f"{brand} {mpn}{type_str} spec sheet PDF",
     ]
+
+
+def _discover_official_domain(brand: str, api_key: str) -> list[str]:
+    """Dynamically discover official manufacturer root domain for any unseen brand."""
+    if not brand:
+        return []
+    try:
+        from urllib.parse import urlparse
+        client = TavilyClient(api_key=api_key)
+        resp = client.search(
+            query=f"{brand} official manufacturer website",
+            search_depth="basic",
+            max_results=5,
+        )
+        candidates: list[str] = []
+        for r in resp.get("results", []):
+            url = r.get("url", "")
+            netloc = urlparse(url).netloc.lower().replace("www.", "")
+            if not any(disallowed in netloc for disallowed in DISALLOWED_SHOPPING_DOMAINS):
+                if netloc and netloc not in candidates:
+                    candidates.append(netloc)
+        if candidates:
+            # Cache discovered domain
+            BRAND_OFFICIAL_DOMAINS[brand] = candidates[:2]
+            print(f"  [Domain Autopilot] Discovered official domain for '{brand}': {candidates[:2]}")
+            return candidates[:2]
+    except Exception as e:
+        print(f"  WARN: Domain discovery failed for '{brand}': {e}")
+    return []
 
 
 def _score_url(url: str) -> int:
@@ -261,6 +419,11 @@ def _score_url(url: str) -> int:
     for blacklisted in URL_BLACKLIST_PATTERNS:
         if blacklisted in url_lower:
             return -10
+
+    # Strict penalty for consumer retail shopping sites (per Unilog rules)
+    for disallowed in DISALLOWED_SHOPPING_DOMAINS:
+        if disallowed in url_lower:
+            return -25
 
     is_pdf = url_lower.split("?")[0].endswith(".pdf") or ".pdf" in url_lower
 
@@ -287,24 +450,35 @@ def _score_url(url: str) -> int:
     return score
 
 
+def _lookup_official_domains(brand: str) -> list[str] | None:
+    """Lookup official domains case-insensitively from master registered dict."""
+    if not brand:
+        return None
+    if brand in BRAND_OFFICIAL_DOMAINS:
+        return BRAND_OFFICIAL_DOMAINS[brand]
+    brand_lower = brand.lower().strip()
+    for k, v in BRAND_OFFICIAL_DOMAINS.items():
+        if k.lower().strip() == brand_lower:
+            return v
+    return None
+
+
 def research_product(mpn: str, brand: str, product_type: str = "dishwasher") -> ResearchResult:
-    """Search the brand's official domain for this MPN's specs.
+    """Search the brand's official domain for this MPN's specs across any industrial category.
 
-    Uses anti-noise ranking and multi-query search to prioritize official spec sheets and technical PDFs.
+    Uses anti-noise ranking, multi-query search, and PDF technical document extraction.
     """
-    domains = BRAND_OFFICIAL_DOMAINS.get(brand)
-    if not domains:
-        return ResearchResult(
-            mpn=mpn, brand=brand, status="error",
-            raw_answer=f"No official domain registered for brand '{brand}'.",
-        )
-
     api_key = os.getenv("TAVILY_API_KEY")
     if not api_key:
         return ResearchResult(
             mpn=mpn, brand=brand, status="error",
             raw_answer="TAVILY_API_KEY not set. Add it to your .env file.",
         )
+
+    # Resolve domain: Check static dictionary first (case-insensitive), fallback to dynamic discovery
+    domains = _lookup_official_domains(brand)
+    if not domains and brand:
+        domains = _discover_official_domain(brand, api_key)
 
     client = TavilyClient(api_key=api_key)
     queries = _build_queries(mpn, brand, product_type)

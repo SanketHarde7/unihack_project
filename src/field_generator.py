@@ -119,51 +119,284 @@ INVOICE_ABBREV: dict[str, str] = {
     "Fingerprint Resistant Stainless Steel": "FRSS",
 }
 
-# Canonical brand names with exact trademark symbols.
-# Applied deterministically AFTER LLM extraction to fix formatting
-# mismatches (e.g. "Frigidaire" → "FRIGIDAIRE®") — no LLM needed.
+# ---------------------------------------------------------------------------
+# Unilog Decimal to Fraction Lookup Table (Decimal_Fraction.xlsx)
+# ---------------------------------------------------------------------------
+
+DECIMAL_FRACTION_MAP: dict[float, str] = {
+    0.015625: "1/64", 0.03125: "1/32", 0.046875: "3/64", 0.0625: "1/16",
+    0.078125: "5/64", 0.09375: "3/32", 0.109375: "7/64", 0.125: "1/8",
+    0.140625: "9/64", 0.15625: "5/32", 0.171875: "11/64", 0.1875: "3/16",
+    0.203125: "13/64", 0.21875: "7/32", 0.234375: "15/64", 0.25: "1/4",
+    0.265625: "17/64", 0.28125: "9/32", 0.296875: "19/64", 0.3125: "5/16",
+    0.328125: "21/64", 0.34375: "11/32", 0.359375: "23/64", 0.375: "3/8",
+    0.390625: "25/64", 0.40625: "13/32", 0.421875: "27/64", 0.4375: "7/16",
+    0.453125: "29/64", 0.46875: "15/32", 0.484375: "31/64", 0.5: "1/2",
+    0.515625: "33/64", 0.53125: "17/32", 0.546875: "35/64", 0.5625: "9/16",
+    0.578125: "37/64", 0.59375: "19/32", 0.609375: "39/64", 0.625: "5/8",
+    0.640625: "41/64", 0.65625: "21/32", 0.671875: "43/64", 0.6875: "11/16",
+    0.703125: "45/64", 0.71875: "23/32", 0.734375: "47/64", 0.75: "3/4",
+    0.765625: "49/64", 0.78125: "25/32", 0.796875: "51/64", 0.8125: "13/16",
+    0.828125: "53/64", 0.84375: "27/32", 0.859375: "55/64", 0.875: "7/8",
+    0.890625: "57/64", 0.90625: "29/32", 0.921875: "59/64", 0.9375: "15/16",
+    0.953125: "61/64", 0.96875: "31/32", 0.984375: "63/64",
+}
+
+
+def format_decimal_to_fraction(val_str: str) -> str:
+    """Convert decimal inches to standard trade fractions (e.g. 50.25 -> 50-1/4, 24.125 -> 24-1/8)."""
+    if not val_str:
+        return ""
+    val_clean = str(val_str).strip()
+    match = re.match(r"^(\d+)?(?:\s*-\s*|\s+)?\.(\d+)$|^(\d+)\.(\d+)$", val_clean)
+    if not match:
+        return val_clean
+    try:
+        whole = int(match.group(1) or match.group(3) or 0)
+        dec_digits = match.group(2) or match.group(4) or "0"
+        dec_float = float(f"0.{dec_digits}")
+
+        closest_frac = None
+        min_diff = 0.015
+        for dec_val, frac_str in DECIMAL_FRACTION_MAP.items():
+            diff = abs(dec_float - dec_val)
+            if diff < min_diff:
+                min_diff = diff
+                closest_frac = frac_str
+
+        if closest_frac:
+            return f"{whole}-{closest_frac}" if whole > 0 else closest_frac
+        return val_clean
+    except Exception:
+        return val_clean
+
+
+# ---------------------------------------------------------------------------
+# Multi-Category Taxonomy Catalog & Classifier
+# ---------------------------------------------------------------------------
+
+TAXONOMY_CATALOG: dict[str, dict[str, Any]] = {
+    "dishwasher": {
+        "Dept": "Appliances",
+        "Class": "Large Appliances",
+        "Fine": "Dishwashers",
+        "Classpath": "Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers",
+        "Product Name": "Dishwasher",
+        "labels": ATTRIBUTE_LABELS,
+    },
+    "faucet": {
+        "Dept": "Plumbing",
+        "Class": "Plumbing Fixtures",
+        "Fine": "Faucets",
+        "Classpath": "Plumbing Fixtures>Faucets>Kitchen Faucets",
+        "Product Name": "Kitchen Faucet",
+        "labels": [
+            "Series", "Model", "Flow Rate", "Number of Handles", "Finish",
+            "Valve Type", "Spout Type", "Spout Reach", "Spout Height", "Mounting Type",
+            "Number of Faucet Holes", "Material", "Color", "Drain Included", "Additional Information",
+        ],
+    },
+    "fitting": {
+        "Dept": "Pipes, Valves & Fittings",
+        "Class": "Pipe Fittings",
+        "Fine": "Couplings & Adapters",
+        "Classpath": "Pipes, Valves & Fittings>Pipe Fittings>Couplings",
+        "Product Name": "Pipe Fitting",
+        "labels": [
+            "Fitting Type", "Connection Type 1", "Connection Type 2", "Nominal Size 1", "Nominal Size 2",
+            "Material Construction", "Pressure Rating", "Schedule", "Finish", "Standards & Approvals",
+            "Length", "Outside Diameter", "Thread Type", "Color", "Additional Information",
+        ],
+    },
+    "refrigerator": {
+        "Dept": "Appliances",
+        "Class": "Large Appliances",
+        "Fine": "Refrigerators",
+        "Classpath": "Appliances & Consumer Electronics>Kitchen Appliances>Refrigerators",
+        "Product Name": "Refrigerator",
+        "labels": [
+            "Series", "Model", "Total Capacity", "Refrigerator Capacity", "Freezer Capacity",
+            "Defrost Type", "Number of Doors", "Ice Maker", "Voltage Rating", "Width",
+            "Depth", "Height", "Energy Star", "Color", "Additional Information",
+        ],
+    },
+    "washer": {
+        "Dept": "Appliances",
+        "Class": "Laundry Appliances",
+        "Fine": "Washing Machines",
+        "Classpath": "Appliances & Consumer Electronics>Laundry Appliances>Washing Machines",
+        "Product Name": "Washing Machine",
+        "labels": [
+            "Series", "Model", "Capacity", "Load Type", "Number of Wash Cycles",
+            "Maximum Spin Speed", "Voltage Rating", "Amperage Rating", "Width", "Depth",
+            "Height", "Steam Function", "Energy Star", "Color", "Additional Information",
+        ],
+    },
+    "range": {
+        "Dept": "Appliances",
+        "Class": "Cooking Appliances",
+        "Fine": "Ranges & Ovens",
+        "Classpath": "Appliances & Consumer Electronics>Cooking Appliances>Ranges",
+        "Product Name": "Range",
+        "labels": [
+            "Series", "Model", "Fuel Type", "Number of Burners", "Oven Capacity",
+            "Cleaning Type", "Cooktop Surface", "Voltage Rating", "Amperage Rating", "Width",
+            "Depth", "Height", "Convection", "Color", "Additional Information",
+        ],
+    },
+    "tool": {
+        "Dept": "Tools & Hardware",
+        "Class": "Power Tools",
+        "Fine": "Drills & Drivers",
+        "Classpath": "Tools & Hardware>Power Tools>Drills & Drivers",
+        "Product Name": "Power Tool",
+        "labels": [
+            "Series", "Model", "Voltage Rating", "Chuck Size", "Maximum Speed",
+            "Torque", "Battery Type", "Motor Type", "Length", "Weight",
+            "Tool Power Output", "Chuck Type", "Housing Material", "Color", "Additional Information",
+        ],
+    },
+    "electrical": {
+        "Dept": "Electrical Distribution",
+        "Class": "Circuit Breakers",
+        "Fine": "Molded Case Circuit Breakers",
+        "Classpath": "Electrical Distribution>Circuit Breakers>Molded Case Circuit Breakers",
+        "Product Name": "Circuit Breaker",
+        "labels": [
+            "Series", "Model", "Current Rating", "Voltage Rating", "Number of Poles",
+            "Interrupt Rating", "Mounting Type", "Trip Type", "Wire Size", "Frame Size",
+            "Frequency Rating", "Operating Temperature", "Standards", "Phase", "Additional Information",
+        ],
+    },
+    "hvac": {
+        "Dept": "Heating, Ventilation & Air Conditioning",
+        "Class": "Air Conditioning Equipment",
+        "Fine": "Split Systems",
+        "Classpath": "Heating, Ventilation & Air Conditioning>Air Conditioning Equipment>Split Systems",
+        "Product Name": "Air Conditioner",
+        "labels": [
+            "Series", "Model", "Cooling Capacity", "SEER Rating", "Voltage Rating",
+            "Refrigerant Type", "Sound Level", "Compressor Type", "Width", "Depth",
+            "Height", "Phase", "Energy Star", "Color", "Additional Information",
+        ],
+    },
+    "water_heater": {
+        "Dept": "Plumbing",
+        "Class": "Water Heaters",
+        "Fine": "Residential Water Heaters",
+        "Classpath": "Plumbing Fixtures>Water Heaters>Residential Water Heaters",
+        "Product Name": "Water Heater",
+        "labels": [
+            "Series", "Model", "Tank Capacity", "Fuel Type", "Energy Factor",
+            "First Hour Rating", "Voltage Rating", "Vent Type", "Height", "Diameter",
+            "Recovery Rate", "Warranty", "Standards", "Color", "Additional Information",
+        ],
+    },
+}
+
+
+def detect_product_category(mpn: str, desc: str) -> str:
+    """Detect category classification from MPN and description text."""
+    combined = f"{mpn} {desc}".lower()
+    mpn_up = mpn.strip().upper()
+
+    if re.search(r"\b(dishwasher|dish\s*washer|dw)\b", combined) or any(mpn_up.startswith(p) for p in ["PDSH", "WDTS", "KDFM", "KDTS", "KDPS", "KDTM", "KDFS", "PDT", "PDD", "LDPH", "SHE", "SHP"]):
+        return "dishwasher"
+    if re.search(r"\b(refrigerator|fridge|freezer|french\s*door|side-by-side)\b", combined) or mpn_up.startswith("LFXS"):
+        return "refrigerator"
+    if re.search(r"\b(faucet|lavatory|spout|sink\s*trim)\b", combined) or mpn_up.startswith("K-") or "7594" in mpn_up:
+        return "faucet"
+    if re.search(r"\b(fitting|coupling|elbow|cplg|nipple|adapter|valve)\b", combined) or re.search(r"\btee\b", combined):
+        return "fitting"
+    if re.search(r"\b(washer|dryer|laundry|front\s*load|top\s*load)\b", combined) or mpn_up.startswith("WM40") or mpn_up.startswith("DVE"):
+        return "washer"
+    if re.search(r"\b(range|oven|cooktop|stove|microwave)\b", combined):
+        return "range"
+    if re.search(r"\b(drill|saw|driver|wrench|multimeter|hammer\s*drill|tool)\b", combined) or mpn_up.startswith("2804-") or mpn_up.startswith("DCD"):
+        return "tool"
+    if re.search(r"\b(breaker|circuit|switch|receptacle|panelboard|fuse)\b", combined) or any(mpn_up.startswith(p) for p in ["HOM", "QO", "BR"]):
+        return "electrical"
+    if re.search(r"\b(ac|air\s*conditioner|heat\s*pump|furnace|thermostat)\b", combined):
+        return "hvac"
+    if re.search(r"\b(water\s*heater|tankless|geyser)\b", combined):
+        return "water_heater"
+    return "dishwasher"
+
+
+# Canonical brand names with exact trademark symbols and parent manufacturer names.
 CANONICAL_BRAND_NAMES: dict[str, dict[str, str]] = {
-    # key = lowercase brand → {brand_name, manufacturer_name}
-    "frigidaire": {
-        "brand_name": "FRIGIDAIRE\u00ae",
-        "manufacturer_name": "Rheem Manufacturing",
-    },
-    "whirlpool": {
-        "brand_name": "Whirlpool\u00ae",
-        "manufacturer_name": "Whirlpool Corporation",
-    },
-    "ge": {
-        "brand_name": "GE\u00ae",
-        "manufacturer_name": "GE Appliances",
-    },
-    "lg": {
-        "brand_name": "LG\u00ae",
-        "manufacturer_name": "LG Electronics",
-    },
-    "kitchenaid": {
-        "brand_name": "KitchenAid\u00ae",
-        "manufacturer_name": "Whirlpool Corporation",
-    },
-    "kitchen aid": {
-        "brand_name": "KitchenAid\u00ae",
-        "manufacturer_name": "Whirlpool Corporation",
-    },
-    "maytag": {
-        "brand_name": "Maytag\u00ae",
-        "manufacturer_name": "Whirlpool Corporation",
-    },
-    "samsung": {
-        "brand_name": "Samsung\u00ae",
-        "manufacturer_name": "Samsung Electronics",
-    },
-    "bosch": {
-        "brand_name": "Bosch\u00ae",
-        "manufacturer_name": "BSH Home Appliances",
-    },
-    "speed queen": {
-        "brand_name": "Speed Queen\u00ae",
-        "manufacturer_name": "Alliance Laundry Systems",
-    },
+    # Major Appliances
+    "frigidaire": {"brand_name": "FRIGIDAIRE\u00ae", "manufacturer_name": "Rheem Manufacturing"},
+    "whirlpool": {"brand_name": "Whirlpool\u00ae", "manufacturer_name": "Whirlpool Corporation"},
+    "ge": {"brand_name": "GE\u00ae", "manufacturer_name": "GE Appliances"},
+    "lg": {"brand_name": "LG\u00ae", "manufacturer_name": "LG Electronics"},
+    "kitchenaid": {"brand_name": "KitchenAid\u00ae", "manufacturer_name": "Whirlpool Corporation"},
+    "kitchen aid": {"brand_name": "KitchenAid\u00ae", "manufacturer_name": "Whirlpool Corporation"},
+    "maytag": {"brand_name": "Maytag\u00ae", "manufacturer_name": "Whirlpool Corporation"},
+    "samsung": {"brand_name": "Samsung\u00ae", "manufacturer_name": "Samsung Electronics"},
+    "bosch": {"brand_name": "Bosch\u00ae", "manufacturer_name": "BSH Home Appliances"},
+    "speed queen": {"brand_name": "Speed Queen\u00ae", "manufacturer_name": "Alliance Laundry Systems"},
+    "electrolux": {"brand_name": "Electrolux\u00ae", "manufacturer_name": "Electrolux Home Products"},
+    "haier": {"brand_name": "Haier\u00ae", "manufacturer_name": "GE Appliances"},
+    "miele": {"brand_name": "Miele\u00ae", "manufacturer_name": "Miele, Inc."},
+    "jennair": {"brand_name": "JennAir\u00ae", "manufacturer_name": "Whirlpool Corporation"},
+    "amana": {"brand_name": "Amana\u00ae", "manufacturer_name": "Whirlpool Corporation"},
+    "viking": {"brand_name": "Viking\u00ae", "manufacturer_name": "Viking Range, LLC"},
+    "sub-zero": {"brand_name": "Sub-Zero\u00ae", "manufacturer_name": "Sub-Zero Group, Inc."},
+    "wolf": {"brand_name": "Wolf\u00ae", "manufacturer_name": "Sub-Zero Group, Inc."},
+    "dacor": {"brand_name": "Dacor\u00ae", "manufacturer_name": "Samsung Electronics"},
+    "sharp": {"brand_name": "Sharp\u00ae", "manufacturer_name": "Sharp Electronics Corporation"},
+
+    # Plumbing & Fixtures (FAUCETS_LOV)
+    "kohler": {"brand_name": "KOHLER\u00ae", "manufacturer_name": "Kohler Co."},
+    "moen": {"brand_name": "Moen\u00ae", "manufacturer_name": "Fortune Brands Innovations"},
+    "delta": {"brand_name": "Delta\u00ae", "manufacturer_name": "Masco Corporation"},
+    "american standard": {"brand_name": "American Standard\u00ae", "manufacturer_name": "LIXIL Corporation"},
+    "pfister": {"brand_name": "Pfister\u00ae", "manufacturer_name": "Spectrum Brands, Inc."},
+    "grohe": {"brand_name": "GROHE\u00ae", "manufacturer_name": "LIXIL Corporation"},
+    "hansgrohe": {"brand_name": "hansgrohe\u00ae", "manufacturer_name": "Hansgrohe SE"},
+    "toto": {"brand_name": "TOTO\u00ae", "manufacturer_name": "TOTO USA, Inc."},
+    "sloan": {"brand_name": "Sloan\u00ae", "manufacturer_name": "Sloan Valve Company"},
+    "zurn": {"brand_name": "Zurn\u00ae", "manufacturer_name": "Zurn Elkay Water Solutions"},
+    "watts": {"brand_name": "Watts\u00ae", "manufacturer_name": "Watts Water Technologies"},
+    "elkay": {"brand_name": "Elkay\u00ae", "manufacturer_name": "Zurn Elkay Water Solutions"},
+
+    # Pipes & Fittings (Fittings_LOV)
+    "apollo valves": {"brand_name": "Apollo\u00ae Valves", "manufacturer_name": "Aalberts Piping Systems"},
+    "nibco": {"brand_name": "NIBCO\u00ae", "manufacturer_name": "NIBCO INC."},
+    "charlotte pipe": {"brand_name": "Charlotte Pipe\u00ae", "manufacturer_name": "Charlotte Pipe and Foundry Company"},
+    "sharkbite": {"brand_name": "SharkBite\u00ae", "manufacturer_name": "Reliance Worldwide Corporation"},
+    "viega": {"brand_name": "Viega\u00ae", "manufacturer_name": "Viega LLC"},
+    "victaulic": {"brand_name": "Victaulic\u00ae", "manufacturer_name": "Victaulic Company"},
+
+    # HVAC & Water Heating
+    "carrier": {"brand_name": "Carrier\u00ae", "manufacturer_name": "Carrier Global Corporation"},
+    "trane": {"brand_name": "Trane\u00ae", "manufacturer_name": "Trane Technologies"},
+    "rheem": {"brand_name": "Rheem\u00ae", "manufacturer_name": "Rheem Manufacturing Company"},
+    "lennox": {"brand_name": "Lennox\u00ae", "manufacturer_name": "Lennox International Inc."},
+    "goodman": {"brand_name": "Goodman\u00ae", "manufacturer_name": "Daikin Comfort Technologies"},
+    "a.o. smith": {"brand_name": "A. O. Smith\u00ae", "manufacturer_name": "A. O. Smith Corporation"},
+    "bradford white": {"brand_name": "Bradford White\u00ae", "manufacturer_name": "Bradford White Corporation"},
+    "honeywell": {"brand_name": "Honeywell\u00ae", "manufacturer_name": "Resideo Technologies, Inc."},
+
+    # Electrical & Distribution
+    "square d": {"brand_name": "Square D\u2122", "manufacturer_name": "Schneider Electric"},
+    "schneider electric": {"brand_name": "Schneider Electric\u2122", "manufacturer_name": "Schneider Electric"},
+    "eaton": {"brand_name": "Eaton\u00ae", "manufacturer_name": "Eaton Corporation"},
+    "siemens": {"brand_name": "Siemens\u00ae", "manufacturer_name": "Siemens Industry, Inc."},
+    "leviton": {"brand_name": "Leviton\u00ae", "manufacturer_name": "Leviton Manufacturing Co., Inc."},
+    "hubbell": {"brand_name": "Hubbell\u00ae", "manufacturer_name": "Hubbell Incorporated"},
+    "lutron": {"brand_name": "Lutron\u00ae", "manufacturer_name": "Lutron Electronics Co., Inc."},
+
+    # Tools & Industrial
+    "milwaukee": {"brand_name": "Milwaukee\u00ae", "manufacturer_name": "Techtronic Industries Co. Ltd."},
+    "dewalt": {"brand_name": "DEWALT\u00ae", "manufacturer_name": "Stanley Black & Decker, Inc."},
+    "makita": {"brand_name": "Makita\u00ae", "manufacturer_name": "Makita Corporation"},
+    "klein tools": {"brand_name": "Klein Tools\u00ae", "manufacturer_name": "Klein Tools, Inc."},
+    "fluke": {"brand_name": "Fluke\u00ae", "manufacturer_name": "Fortive Corporation"},
+    "ridgid": {"brand_name": "RIDGID\u00ae", "manufacturer_name": "Emerson Electric Co."},
+    "3m": {"brand_name": "3M\u2122", "manufacturer_name": "3M Company"},
+    "stanley": {"brand_name": "STANLEY\u00ae", "manufacturer_name": "Stanley Black & Decker, Inc."},
 }
 
 # Per-attribute formatters for LONG_DESC1.
@@ -629,23 +862,18 @@ def _extract_specs_via_llm(research: ResearchResult) -> dict | None:
 # ---------------------------------------------------------------------------
 
 
-def _build_mobile_desc(specs: dict, mpn: str) -> str:
-    """Build MOBILE_DESC via dynamic field joining.  Target 60-80 chars.
-
-    Ground-truth patterns:
-      Row 1: "Rheem Manufacturing FRIGIDAIRE, Dishwasher, Professional Series, PDSH4816AF"
-             → Manufacturer+Brand space-joined (different entities), then comma-joined fields
-      Row 2: "Whirlpool, Dishwasher, Eco Series, WDTS7024RZ, Built-in Mounting"
-             → Brand only (≈ manufacturer), extra trailing spec to reach 60 chars
+def _build_mobile_desc(specs: dict, mpn: str, product_name: str = "Dishwasher") -> str:
+    """Build MOBILE_DESC via dynamic field joining. Target 60-80 chars.
 
     HARD RULE: Never return a string over 80 chars. If over, progressively
-    drop mounting suffix → series → shorten name_part until it fits.
+    drop mounting suffix -> series -> shorten name_part until it fits.
     Final safety net: hard truncate to 77 + "...".
     """
     manufacturer = specs.get("manufacturer_name", "")
     brand_raw = _strip_brand_symbols(specs.get("brand_name", ""))
     series = specs.get("series", "")
     mounting = specs.get("mounting_type", "")
+    prod_type = product_name or "Product"
 
     # Name portion: space-join manufacturer+brand if different entities
     if (
@@ -662,7 +890,7 @@ def _build_mobile_desc(specs: dict, mpn: str) -> str:
         name_part = mpn  # last resort
 
     # --- Attempt 1: full build with mounting suffix ---
-    core_parts = [p for p in [name_part, "Dishwasher", series, mpn] if p]
+    core_parts = [p for p in [name_part, prod_type, series, mpn] if p]
     result = ", ".join(core_parts)
 
     # If under 60 chars and mounting is available, try appending
@@ -673,17 +901,17 @@ def _build_mobile_desc(specs: dict, mpn: str) -> str:
 
     # --- Attempt 2: if over 80, drop mounting suffix ---
     if len(result) > 80:
-        core_parts = [p for p in [name_part, "Dishwasher", series, mpn] if p]
+        core_parts = [p for p in [name_part, prod_type, series, mpn] if p]
         result = ", ".join(core_parts)
 
     # --- Attempt 3: if still over 80, drop series ---
     if len(result) > 80:
-        core_parts = [p for p in [name_part, "Dishwasher", mpn] if p]
+        core_parts = [p for p in [name_part, prod_type, mpn] if p]
         result = ", ".join(core_parts)
 
     # --- Attempt 4: if still over 80, use brand only (drop manufacturer) ---
     if len(result) > 80 and brand_raw:
-        core_parts = [p for p in [brand_raw, "Dishwasher", mpn] if p]
+        core_parts = [p for p in [brand_raw, prod_type, mpn] if p]
         result = ", ".join(core_parts)
 
     # --- Safety net: hard truncate ---
@@ -693,18 +921,15 @@ def _build_mobile_desc(specs: dict, mpn: str) -> str:
     return result
 
 
-def _build_invoice_desc(specs: dict) -> str:
-    """Build INVOICE_DESC via priority-based variable-length join.  ≤40 chars, ALL CAPS.
-
-    Ground-truth patterns:
-      Row 1: "DISHWASHER LEG 5 SST 120V 15A 50-1/4IN"      (ends with depth)
-      Row 2: "DISHWASHER BLTLN SST SST 120V 10A 41DBA"      (ends with sound level)
+def _build_invoice_desc(specs: dict, product_name: str = "DISHWASHER") -> str:
+    """Build INVOICE_DESC via priority-based variable-length join. <=40 chars, ALL CAPS.
 
     Greedily adds specs in priority order; skips any that would push past 40 chars.
     """
-    parts: list[str] = ["DISHWASHER"]
+    lead_word = (product_name or "ITEM").upper().split()[0]
+    parts: list[str] = [lead_word]
 
-    # Build candidate list in priority order (learned from ground-truth analysis)
+    # Build candidate list in priority order
     candidates: list[str] = []
 
     mounting = specs.get("mounting_type", "")
@@ -731,16 +956,16 @@ def _build_invoice_desc(specs: dict) -> str:
     if amperage:
         candidates.append(f"{amperage}A")
 
-    # Trailing specs — depth and sound level compete for remaining space
-    depth = specs.get("depth_with_door_open", "")
+    # Trailing specs - depth and sound level compete for remaining space
+    depth = format_decimal_to_fraction(specs.get("depth_with_door_open", ""))
     if depth:
-        candidates.append(f"{depth}IN")
+        candidates.append(f"{depth}IN".replace(" ", ""))
 
     sound_level = specs.get("sound_level", "")
     if sound_level:
         candidates.append(f"{sound_level}DBA")
 
-    # Greedily add while staying ≤ 40 chars total
+    # Greedily add while staying <= 40 chars total
     for candidate in candidates:
         test = " ".join(parts + [candidate.upper()])
         if len(test) <= 40:
@@ -750,22 +975,12 @@ def _build_invoice_desc(specs: dict) -> str:
 
 
 def _should_include_with_text(with_text: str) -> bool:
-    """Include with_text in description opening only if it's a single feature name.
-
-    "With CleanBoost™"  → True  (single named feature → embed in desc)
-    "With Washing 3rd Rack, Water Repellent…" → False (feature list → separate field only)
-    """
+    """Include with_text in description opening only if it's a single feature name."""
     return bool(with_text) and "," not in with_text
 
 
-def _build_short_desc(specs: dict, mpn: str) -> str:
-    """Build SHORT_DESC from available fields.
-
-    Row 1: "FRIGIDAIRE® Professional Series PDSH4816AF Dishwasher With CleanBoost™,
-            Leg Mounting, 5-Wash Cycle, Stainless Steel"
-    Row 2: "Whirlpool® Eco Series WDTS7024RZ Dishwasher, Built-in Mounting,
-            Stainless Steel, Stainless Steel"
-    """
+def _build_short_desc(specs: dict, mpn: str, product_name: str = "Dishwasher") -> str:
+    """Build SHORT_DESC from available fields."""
     brand = specs.get("brand_name", "")
     series = specs.get("series", "")
     with_text = specs.get("with_text", "")
@@ -773,9 +988,10 @@ def _build_short_desc(specs: dict, mpn: str) -> str:
     wash_cycles = specs.get("wash_cycles", "")
     material = specs.get("material", "")
     color = specs.get("color", "")
+    prod_type = product_name or "Dishwasher"
 
-    # Opening: "{Brand} {Series} {MPN} Dishwasher[ {with_text}]"
-    opening_tokens = [t for t in [brand, series, mpn, "Dishwasher"] if t]
+    # Opening: "{Brand} {Series} {MPN} {Product}[ {with_text}]"
+    opening_tokens = [t for t in [brand, series, mpn, prod_type] if t]
     opening = " ".join(opening_tokens)
 
     if _should_include_with_text(with_text):
@@ -797,24 +1013,23 @@ def _build_short_desc(specs: dict, mpn: str) -> str:
     return opening
 
 
-def _build_long_desc1(specs: dict) -> str:
-    """Build LONG_DESC1 by joining attribute values in slot order with formatting.
-
-    Row 1: "FRIGIDAIRE® Dishwasher With CleanBoost™, Professional Series, 5 Wash Cycles, 120 V, …"
-    Row 2: "Whirlpool® Dishwasher, Eco Series, 120 V, 10 A, …"
-    """
+def _build_long_desc1(specs: dict, product_name: str = "Dishwasher") -> str:
+    """Build LONG_DESC1 by joining attribute values in slot order with formatting."""
     brand = specs.get("brand_name", "")
     with_text = specs.get("with_text", "")
+    prod_type = product_name or "Dishwasher"
 
     # Opening
-    opening = f"{brand} Dishwasher"
+    opening = f"{brand} {prod_type}" if brand else prod_type
     if _should_include_with_text(with_text):
         opening += f" {with_text}"
 
     # Build spec parts from attributes in fixed order
     spec_parts: list[str] = []
     for label in ATTRIBUTE_LABELS:
-        spec_key = ATTR_TO_SPEC_KEY[label]
+        spec_key = ATTR_TO_SPEC_KEY.get(label, "")
+        if not spec_key:
+            continue
         value = specs.get(spec_key, "")
         if not value:
             continue
@@ -822,27 +1037,27 @@ def _build_long_desc1(specs: dict) -> str:
         uom_key = ATTR_UOM_KEYS.get(label)
         uom = specs.get(uom_key, "") if uom_key else ""
 
-        formatter = LONG_DESC_FORMATTERS[label]
-        spec_parts.append(formatter(value, uom))
+        formatter = LONG_DESC_FORMATTERS.get(label)
+        if formatter and callable(formatter):
+            spec_parts.append(formatter(value, uom))
+        else:
+            spec_parts.append(f"{value} {uom}".strip())
 
     if spec_parts:
         return f"{opening}, {', '.join(spec_parts)}"
     return opening
 
 
-def _build_retail_desc(specs: dict) -> str:
-    """Build RETAIL_DESC: series + type + key specs (no brand, no MPN).
-
-    Row 1: "Professional Series Dishwasher, Leg Mounting, 5-Wash Cycle, Stainless Steel"
-    Row 2: "Eco Series Dishwasher, Built-in Mounting, Stainless Steel, Stainless Steel"
-    """
+def _build_retail_desc(specs: dict, product_name: str = "Dishwasher") -> str:
+    """Build RETAIL_DESC: series + type + key specs (no brand, no MPN)."""
     series = specs.get("series", "")
     mounting = specs.get("mounting_type", "")
     wash_cycles = specs.get("wash_cycles", "")
     material = specs.get("material", "")
     color = specs.get("color", "")
+    prod_type = product_name or "Dishwasher"
 
-    opening = f"{series} Dishwasher" if series else "Dishwasher"
+    opening = f"{series} {prod_type}" if series else prod_type
 
     trailing: list[str] = []
     if mounting:
@@ -896,10 +1111,18 @@ def generate_fields(
     # Layer 1: Deterministic constants and copy-through
     # -------------------------------------------------------------------
 
-    # Category constants (same for every dishwasher row)
-    for col, val in CATEGORY_CONSTANTS.items():
-        fields[col] = val
-        field_sources[col] = "constant"
+    # Detect product category and taxonomy classification
+    desc_text = input_row.get("Part_Desc", "")
+    category_key = detect_product_category(mpn, desc_text)
+    tax_info = TAXONOMY_CATALOG.get(category_key, TAXONOMY_CATALOG["dishwasher"])
+    labels = tax_info.get("labels", ATTRIBUTE_LABELS)
+    product_name = tax_info.get("Product Name", "Dishwasher")
+
+    # Category constants (taxonomy mapping per Unilog guidelines)
+    for col in ["Dept", "Class", "Fine", "Classpath", "Product Name"]:
+        if col in tax_info:
+            fields[col] = tax_info[col]
+            field_sources[col] = "constant"
 
     # Copy-through from input row
     for col in [
@@ -917,8 +1140,8 @@ def generate_fields(
     fields["MANUFACTURER_PART_NUMBER"] = mpn
     field_sources["MANUFACTURER_PART_NUMBER"] = "input"
 
-    # Fixed attribute labels (slots 1-15)
-    for i, label in enumerate(ATTRIBUTE_LABELS, start=1):
+    # Attribute labels (slots 1-15)
+    for i, label in enumerate(labels[:15], start=1):
         fields[f"ATTRIBUTE_LABEL {i}"] = label
         field_sources[f"ATTRIBUTE_LABEL {i}"] = "constant"
 
@@ -1019,19 +1242,19 @@ def generate_fields(
                 field_sources[f"ATTRIBUTE_UOM {i}"] = _determine_research_provenance(uom)
 
     # — Description fields (dynamic assembly) —
-    fields["MOBILE_DESC"] = _build_mobile_desc(specs, mpn)
+    fields["MOBILE_DESC"] = _build_mobile_desc(specs, mpn, product_name=product_name)
     field_sources["MOBILE_DESC"] = "derived"
 
-    fields["INVOICE_DESC"] = _build_invoice_desc(specs)
+    fields["INVOICE_DESC"] = _build_invoice_desc(specs, product_name=product_name)
     field_sources["INVOICE_DESC"] = "derived"
 
-    fields["SHORT_DESC"] = _build_short_desc(specs, mpn)
+    fields["SHORT_DESC"] = _build_short_desc(specs, mpn, product_name=product_name)
     field_sources["SHORT_DESC"] = "derived"
 
-    fields["LONG_DESC1"] = _build_long_desc1(specs)
+    fields["LONG_DESC1"] = _build_long_desc1(specs, product_name=product_name)
     field_sources["LONG_DESC1"] = "derived"
 
-    fields["RETAIL_DESC"] = _build_retail_desc(specs)
+    fields["RETAIL_DESC"] = _build_retail_desc(specs, product_name=product_name)
     field_sources["RETAIL_DESC"] = "derived"
 
     # — With text —
