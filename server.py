@@ -67,6 +67,18 @@ class EnrichRequest(BaseModel):
 # API Endpoints
 # ---------------------------------------------------------------------------
 
+@app.get("/api/ping")
+@app.get("/ping")
+@app.get("/api/keep-alive")
+def keep_alive_ping():
+    """Ultra-lightweight keep-alive ping for external cronjobs (e.g. cron-job.org, UptimeRobot)."""
+    return {
+        "status": "alive",
+        "service": "enrichai",
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
+
+
 @app.get("/api/health")
 def health_check():
     """System health check & cloud service status."""
@@ -86,31 +98,31 @@ def health_check():
 
 @app.get("/api/presets")
 def get_presets():
-    """Return pre-loaded benchmark dishwasher presets from the dataset."""
+    """Return top multi-category benchmark presets."""
     return [
         {
-            "mpn": "PDSH4816AF",
-            "brand": "Frigidaire",
-            "description": "PDSH4816AF Dishwasher SS - Display Only",
-            "highlight": "Ground Truth Benchmark 1 (CleanBoost™, 5-Wash Cycles)",
+            "mpn": "K-596-CP",
+            "brand": "Kohler",
+            "description": "Kohler Simplice Pull-Down Kitchen Faucet Polished Chrome",
+            "highlight": "0.92 HIGH Confidence (Plumbing Fixture Spec Sheet)",
         },
         {
-            "mpn": "WDTS7024RZ",
-            "brand": "Whirlpool",
-            "description": "WDTS7024RZ Dishwasher SS - Display Only",
-            "highlight": "Ground Truth Benchmark 2 (Eco Series, 41 dBA, 3rd Rack)",
+            "mpn": "2804-20",
+            "brand": "Milwaukee",
+            "description": "Milwaukee M18 FUEL 1/2 in. Hammer Drill Bare Tool",
+            "highlight": "0.88 HIGH Confidence (M18 FUEL Power Tool Specs)",
         },
         {
-            "mpn": "KDFM404KPS",
+            "mpn": "HOM250",
+            "brand": "Square D",
+            "description": "Square D Homeline 50A 2-Pole Circuit Breaker 120/240V",
+            "highlight": "0.88 HIGH Confidence (Schneider Electric Industrial Breaker)",
+        },
+        {
+            "mpn": "KDTS424SBE",
             "brand": "KitchenAid",
-            "description": "KDFM404KPS Dishwasher SS",
-            "highlight": "KitchenAid PrintShield™ Finish & FreeFlex™ Third Rack",
-        },
-        {
-            "mpn": "PDT715SYVFS",
-            "brand": "GE",
-            "description": "PDT715SYVFS Ge Dishwasher SS",
-            "highlight": "GE Profile™ with Microban® Antimicrobial Technology",
+            "description": "KDTS424SBE Kitchen Aid Dishwasher Bk",
+            "highlight": "0.78 HIGH Confidence (CleanPrint™ 44 dBA Dishwasher)",
         },
     ]
 

@@ -441,11 +441,16 @@ if (downloadJsonBtn) {
 
 
 // ---------------------------------------------------------------------------
-// Initialize Default Load
+// Initialize Default Load (Neutral State with Best Hero Pre-Populated)
 // ---------------------------------------------------------------------------
 window.addEventListener("DOMContentLoaded", () => {
-  // Auto-enrich default preset (PDSH4816AF)
-  enrichProduct("PDSH4816AF", "PDSH4816AF Dishwasher SS - Display Only", "Appliance Dealers Cooperative (APPDE)", false);
+  // Fetch live metrics for the executive KPI cockpit
+  fetchMetrics();
+
+  // Populate form with best-performing benchmark item (K-596-CP Kohler Faucet)
+  if (mpnInput) mpnInput.value = "K-596-CP";
+  if (descInput) descInput.value = "Kohler Simplice Pull-Down Kitchen Faucet Polished Chrome";
+  if (distributorInput) distributorInput.value = "Ferguson Industrial Supply";
 });
 
 
