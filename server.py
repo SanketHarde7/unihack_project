@@ -411,31 +411,38 @@ def curator_override(req: CuratorOverrideRequest):
     }
 
 
+@app.get("/api/catalog/export")
+@app.get("/api/export-csv")
+def export_catalog_default():
+    """Default export: Unilog 252-Column Master CSV."""
+    return export_catalog_formatted("unilog")
+
+
 @app.get("/api/catalog/export/{export_format}")
-def export_catalog_formatted(export_format: str):
+def export_catalog_formatted(export_format: str = "unilog"):
     """Multi-channel syndication export: unilog (252-col), grainger, shopify, or json."""
     records = get_all_records()
     headers = _read_column_headers()
     fmt = export_format.lower().strip()
 
-    if fmt in ("unilog", "csv", "252"):
-        csv_content = export_to_unilog(records, headers)
+    if fmt in ("unilog", "csv", "252", "master"):
+        csv_content = "\ufeff" + export_to_unilog(records, headers)
         filename = "EnrichAI_Master_252Col_Delivery.csv"
-        media_type = "text/csv"
+        media_type = "text/csv; charset=utf-8"
     elif fmt in ("grainger", "b2b"):
-        csv_content = export_to_grainger(records)
+        csv_content = "\ufeff" + export_to_grainger(records)
         filename = "Grainger_Industrial_B2B_Catalog.csv"
-        media_type = "text/csv"
+        media_type = "text/csv; charset=utf-8"
     elif fmt in ("shopify", "ecommerce"):
-        csv_content = export_to_shopify(records)
+        csv_content = "\ufeff" + export_to_shopify(records)
         filename = "Shopify_ECommerce_Catalog.csv"
-        media_type = "text/csv"
+        media_type = "text/csv; charset=utf-8"
     elif fmt in ("json", "pim"):
         json_content = export_to_json_pim(records)
         filename = "Catalog_PIM_Export.json"
         return Response(
             content=json_content,
-            media_type="application/json",
+            media_type="application/json; charset=utf-8",
             headers={"Content-Disposition": f"attachment; filename={filename}"},
         )
     else:

@@ -383,32 +383,61 @@ descTabs.forEach((tab) => {
   });
 });
 
-// Download CSV Button
-downloadCsvBtn.addEventListener("click", () => {
-  window.open(`${API_BASE}/api/catalog/export`, "_blank");
-});
+// Syndication Dropdown Menu Toggle & Options
+const syndicateMenuBtn = document.getElementById("syndicate-menu-btn");
+const exportDropdownMenu = document.getElementById("export-dropdown-menu");
+
+if (syndicateMenuBtn && exportDropdownMenu) {
+  syndicateMenuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    exportDropdownMenu.classList.toggle("hidden");
+  });
+
+  document.addEventListener("click", () => {
+    exportDropdownMenu.classList.add("hidden");
+  });
+
+  const exportOptions = exportDropdownMenu.querySelectorAll(".export-option");
+  exportOptions.forEach((opt) => {
+    opt.addEventListener("click", (e) => {
+      e.preventDefault();
+      const format = opt.dataset.format || "unilog";
+      exportDropdownMenu.classList.add("hidden");
+      window.open(`${API_BASE}/api/catalog/export/${format}`, "_blank");
+    });
+  });
+}
+
+// Download Master CSV Button (Direct 252-Column Unilog Download)
+if (downloadCsvBtn) {
+  downloadCsvBtn.addEventListener("click", () => {
+    window.open(`${API_BASE}/api/catalog/export/unilog`, "_blank");
+  });
+}
 
 // Download JSON Audit Button
-downloadJsonBtn.addEventListener("click", () => {
-  if (!currentRecord) {
-    alert("Please enrich a product first.");
-    return;
-  }
-  const auditData = {
-    mpn: currentRecord.mpn,
-    brand: currentRecord.brand,
-    validation: currentRecord.validation,
-    field_provenance: currentRecord.field_sources,
-    timestamp: new Date().toISOString(),
-  };
-  const blob = new Blob([JSON.stringify(auditData, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${currentRecord.mpn}_Audit_Report.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-});
+if (downloadJsonBtn) {
+  downloadJsonBtn.addEventListener("click", () => {
+    if (!currentRecord) {
+      alert("Please enrich a product first.");
+      return;
+    }
+    const auditData = {
+      mpn: currentRecord.mpn,
+      brand: currentRecord.brand,
+      validation: currentRecord.validation,
+      field_provenance: currentRecord.field_sources,
+      timestamp: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(auditData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${currentRecord.mpn}_Audit_Report.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}
 
 
 // ---------------------------------------------------------------------------
