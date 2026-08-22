@@ -467,7 +467,10 @@ def research_product(mpn: str, brand: str, product_type: str = "dishwasher") -> 
     """Search the brand's official domain for this MPN's specs across any industrial category.
 
     Uses anti-noise ranking, multi-query search, and PDF technical document extraction.
+    Includes rate-limit-safe retry logic with exponential backoff for batch processing.
     """
+    import time as _time
+
     api_key = os.getenv("TAVILY_API_KEY")
     if not api_key:
         return ResearchResult(
@@ -487,16 +490,37 @@ def research_product(mpn: str, brand: str, product_type: str = "dishwasher") -> 
     raw_sources: list[dict] = []
     raw_answers: list[str] = []
 
-    for query in queries:
-        try:
-            response = client.search(
-                query=query,
-                include_domains=domains,
-                search_depth="advanced",
-                max_results=5,
-            )
-        except Exception as e:
-            print(f"  WARN: Tavily query failed ({query!r}): {e}")
+    def _tavily_search_with_retry(query: str, max_retries: int = 3) -> dict | None:
+        """Execute a Tavily search with automatic retry on rate limit errors."""
+        for attempt in range(max_retries + 1):
+            try:
+                response = client.search(
+                    query=query,
+                    include_domains=domains,
+                    search_depth="advanced",
+                    max_results=5,
+                )
+                return response
+            except Exception as e:
+                err_str = str(e).lower()
+                is_rate_limit = any(sig in err_str for sig in [
+                    "rate", "limit", "429", "too many", "quota", "throttl",
+                ])
+                if is_rate_limit and attempt < max_retries:
+                    wait_secs = (attempt + 1) * 10  # 10s, 20s, 30s backoff
+                    print(f"  [RATE LIMIT] Tavily throttled on query attempt {attempt + 1}/{max_retries + 1}. "
+                          f"Backing off {wait_secs}s before retry...")
+                    _time.sleep(wait_secs)
+                    continue
+                else:
+                    print(f"  WARN: Tavily query failed ({query!r}): {e}")
+                    return None
+        return None
+
+    # Smart query strategy: fire primary query first, only add more if results are thin
+    for qi, query in enumerate(queries):
+        response = _tavily_search_with_retry(query)
+        if response is None:
             continue
 
         answer = response.get("answer", "")
@@ -516,6 +540,15 @@ def research_product(mpn: str, brand: str, product_type: str = "dishwasher") -> 
                 "query": query,
                 "source_type": "pdf" if is_pdf else "html",
             })
+
+        # If first query already found 3+ good sources, skip remaining queries to save API budget
+        if qi == 0 and len([s for s in raw_sources if s["score"] >= 0]) >= 3:
+            print(f"  [Smart Query] First query returned {len(raw_sources)} sources (3+ clean), skipping extra queries to save API budget.")
+            break
+
+        # Inter-query pacing (2 seconds between Tavily calls to avoid burst throttling)
+        if qi < len(queries) - 1:
+            _time.sleep(2)
 
     if not raw_sources:
         return ResearchResult(

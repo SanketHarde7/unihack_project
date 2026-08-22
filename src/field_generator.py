@@ -172,7 +172,8 @@ def format_decimal_to_fraction(val_str: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Multi-Category Taxonomy Catalog & Classifier
+# ---------------------------------------------------------------------------
+# Multi-Category Taxonomy Catalog & Profiles
 # ---------------------------------------------------------------------------
 
 TAXONOMY_CATALOG: dict[str, dict[str, Any]] = {
@@ -183,6 +184,12 @@ TAXONOMY_CATALOG: dict[str, dict[str, Any]] = {
         "Classpath": "Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers",
         "Product Name": "Dishwasher",
         "labels": ATTRIBUTE_LABELS,
+        "spec_keys": ATTR_TO_SPEC_KEY,
+        "uom_keys": ATTR_UOM_KEYS,
+        "invoice_priority": [
+            "mounting_type", "wash_cycles", "material", "color",
+            "voltage", "amperage", "depth_with_door_open", "sound_level",
+        ],
     },
     "faucet": {
         "Dept": "Plumbing",
@@ -194,6 +201,31 @@ TAXONOMY_CATALOG: dict[str, dict[str, Any]] = {
             "Series", "Model", "Flow Rate", "Number of Handles", "Finish",
             "Valve Type", "Spout Type", "Spout Reach", "Spout Height", "Mounting Type",
             "Number of Faucet Holes", "Material", "Color", "Drain Included", "Additional Information",
+        ],
+        "spec_keys": {
+            "Series": "series",
+            "Model": "model",
+            "Flow Rate": "flow_rate",
+            "Number of Handles": "number_of_handles",
+            "Finish": "finish",
+            "Valve Type": "valve_type",
+            "Spout Type": "spout_type",
+            "Spout Reach": "spout_reach",
+            "Spout Height": "spout_height",
+            "Mounting Type": "mounting_type",
+            "Number of Faucet Holes": "faucet_holes",
+            "Material": "material",
+            "Color": "color",
+            "Drain Included": "drain_included",
+            "Additional Information": "additional_info",
+        },
+        "uom_keys": {
+            "Flow Rate": "flow_rate_uom",
+            "Spout Reach": "spout_reach_uom",
+            "Spout Height": "spout_height_uom",
+        },
+        "invoice_priority": [
+            "flow_rate", "finish", "number_of_handles", "mounting_type", "color", "material",
         ],
     },
     "fitting": {
@@ -207,6 +239,33 @@ TAXONOMY_CATALOG: dict[str, dict[str, Any]] = {
             "Material Construction", "Pressure Rating", "Schedule", "Finish", "Standards & Approvals",
             "Length", "Outside Diameter", "Thread Type", "Color", "Additional Information",
         ],
+        "spec_keys": {
+            "Fitting Type": "fitting_type",
+            "Connection Type 1": "connection_1",
+            "Connection Type 2": "connection_2",
+            "Nominal Size 1": "nominal_size_1",
+            "Nominal Size 2": "nominal_size_2",
+            "Material Construction": "material",
+            "Pressure Rating": "pressure_rating",
+            "Schedule": "schedule",
+            "Finish": "finish",
+            "Standards & Approvals": "standards_approvals",
+            "Length": "length",
+            "Outside Diameter": "outside_diameter",
+            "Thread Type": "thread_type",
+            "Color": "color",
+            "Additional Information": "additional_info",
+        },
+        "uom_keys": {
+            "Nominal Size 1": "size_uom_1",
+            "Nominal Size 2": "size_uom_2",
+            "Pressure Rating": "pressure_uom",
+            "Length": "length_uom",
+            "Outside Diameter": "diameter_uom",
+        },
+        "invoice_priority": [
+            "fitting_type", "nominal_size_1", "material", "connection_1", "pressure_rating",
+        ],
     },
     "refrigerator": {
         "Dept": "Appliances",
@@ -218,6 +277,35 @@ TAXONOMY_CATALOG: dict[str, dict[str, Any]] = {
             "Series", "Model", "Total Capacity", "Refrigerator Capacity", "Freezer Capacity",
             "Defrost Type", "Number of Doors", "Ice Maker", "Voltage Rating", "Width",
             "Depth", "Height", "Energy Star", "Color", "Additional Information",
+        ],
+        "spec_keys": {
+            "Series": "series",
+            "Model": "model",
+            "Total Capacity": "total_capacity",
+            "Refrigerator Capacity": "refrigerator_capacity",
+            "Freezer Capacity": "freezer_capacity",
+            "Defrost Type": "defrost_type",
+            "Number of Doors": "number_of_doors",
+            "Ice Maker": "ice_maker",
+            "Voltage Rating": "voltage",
+            "Width": "width",
+            "Depth": "depth",
+            "Height": "height",
+            "Energy Star": "energy_star",
+            "Color": "color",
+            "Additional Information": "additional_info",
+        },
+        "uom_keys": {
+            "Total Capacity": "capacity_uom",
+            "Refrigerator Capacity": "capacity_uom",
+            "Freezer Capacity": "capacity_uom",
+            "Voltage Rating": "voltage_uom",
+            "Width": "width_uom",
+            "Depth": "depth_uom",
+            "Height": "height_uom",
+        },
+        "invoice_priority": [
+            "total_capacity", "color", "voltage", "number_of_doors",
         ],
     },
     "washer": {
@@ -231,6 +319,35 @@ TAXONOMY_CATALOG: dict[str, dict[str, Any]] = {
             "Maximum Spin Speed", "Voltage Rating", "Amperage Rating", "Width", "Depth",
             "Height", "Steam Function", "Energy Star", "Color", "Additional Information",
         ],
+        "spec_keys": {
+            "Series": "series",
+            "Model": "model",
+            "Capacity": "capacity",
+            "Load Type": "load_type",
+            "Number of Wash Cycles": "wash_cycles",
+            "Maximum Spin Speed": "spin_speed",
+            "Voltage Rating": "voltage",
+            "Amperage Rating": "amperage",
+            "Width": "width",
+            "Depth": "depth",
+            "Height": "height",
+            "Steam Function": "steam",
+            "Energy Star": "energy_star",
+            "Color": "color",
+            "Additional Information": "additional_info",
+        },
+        "uom_keys": {
+            "Capacity": "capacity_uom",
+            "Maximum Spin Speed": "speed_uom",
+            "Voltage Rating": "voltage_uom",
+            "Amperage Rating": "amperage_uom",
+            "Width": "width_uom",
+            "Depth": "depth_uom",
+            "Height": "height_uom",
+        },
+        "invoice_priority": [
+            "capacity", "load_type", "wash_cycles", "color", "voltage", "amperage",
+        ],
     },
     "range": {
         "Dept": "Appliances",
@@ -242,6 +359,34 @@ TAXONOMY_CATALOG: dict[str, dict[str, Any]] = {
             "Series", "Model", "Fuel Type", "Number of Burners", "Oven Capacity",
             "Cleaning Type", "Cooktop Surface", "Voltage Rating", "Amperage Rating", "Width",
             "Depth", "Height", "Convection", "Color", "Additional Information",
+        ],
+        "spec_keys": {
+            "Series": "series",
+            "Model": "model",
+            "Fuel Type": "fuel_type",
+            "Number of Burners": "burners",
+            "Oven Capacity": "oven_capacity",
+            "Cleaning Type": "cleaning_type",
+            "Cooktop Surface": "cooktop_surface",
+            "Voltage Rating": "voltage",
+            "Amperage Rating": "amperage",
+            "Width": "width",
+            "Depth": "depth",
+            "Height": "height",
+            "Convection": "convection",
+            "Color": "color",
+            "Additional Information": "additional_info",
+        },
+        "uom_keys": {
+            "Oven Capacity": "capacity_uom",
+            "Voltage Rating": "voltage_uom",
+            "Amperage Rating": "amperage_uom",
+            "Width": "width_uom",
+            "Depth": "depth_uom",
+            "Height": "height_uom",
+        },
+        "invoice_priority": [
+            "fuel_type", "burners", "oven_capacity", "color", "voltage", "amperage",
         ],
     },
     "tool": {
@@ -255,6 +400,34 @@ TAXONOMY_CATALOG: dict[str, dict[str, Any]] = {
             "Torque", "Battery Type", "Motor Type", "Length", "Weight",
             "Tool Power Output", "Chuck Type", "Housing Material", "Color", "Additional Information",
         ],
+        "spec_keys": {
+            "Series": "series",
+            "Model": "model",
+            "Voltage Rating": "voltage",
+            "Chuck Size": "chuck_size",
+            "Maximum Speed": "max_speed",
+            "Torque": "torque",
+            "Battery Type": "battery_type",
+            "Motor Type": "motor_type",
+            "Length": "length",
+            "Weight": "weight",
+            "Tool Power Output": "power_output",
+            "Chuck Type": "chuck_type",
+            "Housing Material": "housing_material",
+            "Color": "color",
+            "Additional Information": "additional_info",
+        },
+        "uom_keys": {
+            "Voltage Rating": "voltage_uom",
+            "Chuck Size": "chuck_size_uom",
+            "Maximum Speed": "max_speed_uom",
+            "Torque": "torque_uom",
+            "Length": "length_uom",
+            "Weight": "weight_uom",
+        },
+        "invoice_priority": [
+            "voltage", "chuck_size", "torque", "max_speed", "battery_type", "color",
+        ],
     },
     "electrical": {
         "Dept": "Electrical Distribution",
@@ -266,6 +439,32 @@ TAXONOMY_CATALOG: dict[str, dict[str, Any]] = {
             "Series", "Model", "Current Rating", "Voltage Rating", "Number of Poles",
             "Interrupt Rating", "Mounting Type", "Trip Type", "Wire Size", "Frame Size",
             "Frequency Rating", "Operating Temperature", "Standards", "Phase", "Additional Information",
+        ],
+        "spec_keys": {
+            "Series": "series",
+            "Model": "model",
+            "Current Rating": "current_rating",
+            "Voltage Rating": "voltage",
+            "Number of Poles": "number_of_poles",
+            "Interrupt Rating": "interrupt_rating",
+            "Mounting Type": "mounting_type",
+            "Trip Type": "trip_type",
+            "Wire Size": "wire_size",
+            "Frame Size": "frame_size",
+            "Frequency Rating": "frequency_rating",
+            "Operating Temperature": "operating_temp",
+            "Standards": "standards",
+            "Phase": "phase",
+            "Additional Information": "additional_info",
+        },
+        "uom_keys": {
+            "Current Rating": "current_uom",
+            "Voltage Rating": "voltage_uom",
+            "Interrupt Rating": "interrupt_uom",
+            "Frequency Rating": "frequency_uom",
+        },
+        "invoice_priority": [
+            "voltage", "current_rating", "number_of_poles", "mounting_type", "interrupt_rating",
         ],
     },
     "hvac": {
@@ -279,6 +478,34 @@ TAXONOMY_CATALOG: dict[str, dict[str, Any]] = {
             "Refrigerant Type", "Sound Level", "Compressor Type", "Width", "Depth",
             "Height", "Phase", "Energy Star", "Color", "Additional Information",
         ],
+        "spec_keys": {
+            "Series": "series",
+            "Model": "model",
+            "Cooling Capacity": "cooling_capacity",
+            "SEER Rating": "seer_rating",
+            "Voltage Rating": "voltage",
+            "Refrigerant Type": "refrigerant",
+            "Sound Level": "sound_level",
+            "Compressor Type": "compressor_type",
+            "Width": "width",
+            "Depth": "depth",
+            "Height": "height",
+            "Phase": "phase",
+            "Energy Star": "energy_star",
+            "Color": "color",
+            "Additional Information": "additional_info",
+        },
+        "uom_keys": {
+            "Cooling Capacity": "capacity_uom",
+            "Voltage Rating": "voltage_uom",
+            "Sound Level": "sound_uom",
+            "Width": "width_uom",
+            "Depth": "depth_uom",
+            "Height": "height_uom",
+        },
+        "invoice_priority": [
+            "cooling_capacity", "seer_rating", "voltage", "sound_level",
+        ],
     },
     "water_heater": {
         "Dept": "Plumbing",
@@ -291,8 +518,57 @@ TAXONOMY_CATALOG: dict[str, dict[str, Any]] = {
             "First Hour Rating", "Voltage Rating", "Vent Type", "Height", "Diameter",
             "Recovery Rate", "Warranty", "Standards", "Color", "Additional Information",
         ],
+        "spec_keys": {
+            "Series": "series",
+            "Model": "model",
+            "Tank Capacity": "tank_capacity",
+            "Fuel Type": "fuel_type",
+            "Energy Factor": "energy_factor",
+            "First Hour Rating": "first_hour_rating",
+            "Voltage Rating": "voltage",
+            "Vent Type": "vent_type",
+            "Height": "height",
+            "Diameter": "diameter",
+            "Recovery Rate": "recovery_rate",
+            "Warranty": "warranty",
+            "Standards": "standards",
+            "Color": "color",
+            "Additional Information": "additional_info",
+        },
+        "uom_keys": {
+            "Tank Capacity": "capacity_uom",
+            "Voltage Rating": "voltage_uom",
+            "Height": "height_uom",
+            "Diameter": "diameter_uom",
+        },
+        "invoice_priority": [
+            "tank_capacity", "fuel_type", "energy_factor", "voltage",
+        ],
+    },
+    "unclassified": {
+        "Dept": "Uncategorized",
+        "Class": "Pending Classification",
+        "Fine": "Unclassified",
+        "Classpath": "Uncategorized>Pending Classification",
+        "Product Name": "Unclassified Product",
+        "labels": [
+            "Series", "Model", "Material", "Additional Information",
+        ],
+        "spec_keys": {
+            "Series": "series",
+            "Model": "model",
+            "Material": "material",
+            "Additional Information": "additional_info",
+        },
+        "uom_keys": {},
+        "invoice_priority": [
+            "material", "series",
+        ],
     },
 }
+
+# Alias for compatibility
+CATEGORY_PROFILES = TAXONOMY_CATALOG
 
 
 def detect_product_category(mpn: str, desc: str) -> str:
@@ -320,7 +596,7 @@ def detect_product_category(mpn: str, desc: str) -> str:
         return "hvac"
     if re.search(r"\b(water\s*heater|tankless|geyser)\b", combined):
         return "water_heater"
-    return "dishwasher"
+    return "unclassified"
 
 
 # Canonical brand names with exact trademark symbols and parent manufacturer names.
@@ -582,26 +858,42 @@ _EXAMPLE_2 = {
     ],
 }
 
-_EXTRACTION_KEYS = list(_EXAMPLE_1.keys())
+def _get_extraction_keys_for_category(category_key: str = "dishwasher") -> list[str]:
+    """Get the minimal, exact extraction keys needed for this specific product category."""
+    profile = TAXONOMY_CATALOG.get(category_key, TAXONOMY_CATALOG.get("unclassified", {}))
+    spec_keys = list(profile.get("spec_keys", {}).values())
+    uom_keys = list(profile.get("uom_keys", {}).values())
+    universal_keys = [
+        "manufacturer_name", "brand_name", "series", "model", "material", "color",
+        "with_text", "standards_approvals", "warranty", "marketing_description",
+        "item_features", "additional_info", "not_found_fields",
+    ]
+    return sorted(list(set(universal_keys + spec_keys + uom_keys)))
 
 
 def _build_extraction_messages(
     research_text: str,
     mpn: str,
     brand: str,
+    category_key: str = "dishwasher",
+    product_name: str = "Dishwasher",
 ) -> list[dict]:
     """Build the chat messages for the Groq LLM spec extraction call."""
+    extraction_keys = _get_extraction_keys_for_category(category_key)
 
     system_msg = (
-        "You are a product data extraction specialist for dishwashers. "
+        f"You are a professional product data extraction specialist for industrial and consumer goods ({product_name}). "
         "You extract ONLY factual specifications from the provided research "
-        "text. You NEVER use your general knowledge about products or "
-        "dishwashers. If a specification cannot be found in the research "
+        "text. You NEVER use your general knowledge about products. If a specification cannot be found in the research "
         "text, set its value to an empty string and add the field name to "
         "not_found_fields."
     )
 
-    user_msg = f"""TASK: Extract structured product specifications for dishwasher MPN: {mpn}, Brand hint: {brand}.
+    example_section = ""
+    if category_key == "dishwasher":
+        example_section = f"\nREFERENCE EXAMPLE (exact output format expected for dishwasher):\n{json.dumps(_EXAMPLE_1, indent=2)}\n"
+
+    user_msg = f"""TASK: Extract structured product specifications for {product_name} MPN: {mpn}, Brand hint: {brand}.
 
 RESEARCH TEXT (extract ONLY from this text — do NOT use general knowledge):
 ---
@@ -612,24 +904,16 @@ EXTRACTION RULES:
 1. Extract values ONLY from the RESEARCH TEXT above. Never fabricate or guess.
 2. If a field cannot be found, set it to "" and add the field name to not_found_fields.
 3. For brand_name: include the trademark symbol (® or ™) exactly as shown in the research text.
-4. For manufacturer_name: use the full legal company name (e.g. "Whirlpool Corporation", "Rheem Manufacturing"), NOT just the brand.
+4. For manufacturer_name: use the full legal company name (e.g. "Whirlpool Corporation", "Kohler Co.", "Rheem Manufacturing"), NOT just the brand.
 5. Use exact numeric values from research (e.g., "120" not "120.0", "5" not "five").
-6. For dimensions with multiple components (like rack heights), include all details exactly as they appear.
+6. For dimensions with multiple components (like rack heights, spout reaches), include all details exactly as they appear.
 7. For item_features: extract individual bullet-point features as a list of strings (max 20).
 8. For standards_approvals: use pipe-separated format (e.g. "UL Listed|ENERGY STAR Certified").
 9. For with_text: extract any "With..." feature phrase (e.g. "With CleanBoost™").
 10. For additional_info: comma-separated list of supplementary specs not covered by other fields.
-
-REFERENCE EXAMPLES (showing the exact output format expected):
-
-Example 1 — Frigidaire PDSH4816AF:
-{json.dumps(_EXAMPLE_1, indent=2)}
-
-Example 2 — Whirlpool WDTS7024RZ:
-{json.dumps(_EXAMPLE_2, indent=2)}
-
+{example_section}
 Return ONLY a valid JSON object with exactly these keys:
-{json.dumps(_EXTRACTION_KEYS, indent=2)}"""
+{json.dumps(extraction_keys, indent=2)}"""
 
     return [
         {"role": "system", "content": system_msg},
@@ -733,40 +1017,51 @@ def _clean_source_content(raw_content: str, mpn: str, brand: str) -> str:
         cleaned_lines.append(line)
     cleaned = "\n".join(cleaned_lines)
 
-    # If content is already short enough, return as-is
-    if len(cleaned) <= 1500:
+    # If content is under 4,500 characters, return full content as-is
+    if len(cleaned) <= 4500:
         return cleaned
 
-    # Find the best anchor point: MPN first, then brand name
-    anchor_pos = -1
-    mpn_upper = mpn.upper()
-    cleaned_upper = cleaned.upper()
+    cleaned_lower = cleaned.lower()
 
-    anchor_pos = cleaned_upper.find(mpn_upper)
+    # Search for spec section anchor points first (where specs actually live)
+    spec_keywords = [
+        "specifications", "specification", "technical details", "product specifications",
+        "specs & details", "specs & dimensions", "dimensions & weight", "key features",
+        "electrical specifications", "product specs", "features & specs", "dimentions",
+        "decibel", "lo-decibel", "lodecibel", "wash cycles", "motor type", "rpm", "torque",
+    ]
+    anchor_pos = -1
+    for kw in spec_keywords:
+        pos = cleaned_lower.find(kw)
+        if pos != -1:
+            anchor_pos = pos
+            break
+
+    # If no spec section found, fall back to MPN or brand anchor
+    if anchor_pos == -1:
+        anchor_pos = cleaned.upper().find(mpn.upper())
     if anchor_pos == -1 and brand:
-        # Try brand name (handle "Kitchen Aid" / "KitchenAid" variants)
-        brand_variants = [brand, brand.replace(" ", "")]
-        for variant in brand_variants:
-            anchor_pos = cleaned_upper.find(variant.upper())
-            if anchor_pos != -1:
+        for variant in [brand, brand.replace(" ", "")]:
+            pos = cleaned.upper().find(variant.upper())
+            if pos != -1:
+                anchor_pos = pos
                 break
 
     if anchor_pos == -1:
-        # No keyword found — take from start (fallback)
-        return cleaned[:1500]
+        return cleaned[:4500]
 
-    # Center a 1500-char window around the anchor
-    half_window = 750
+    # Center a 4,500-char window around the anchor point
+    half_window = 1500
     start = max(0, anchor_pos - half_window)
-    end = start + 1500
-    if end > len(cleaned):
-        end = len(cleaned)
-        start = max(0, end - 1500)
-
+    end = min(len(cleaned), start + 4500)
     return cleaned[start:end]
 
 
-def _extract_specs_via_llm(research: ResearchResult) -> dict | None:
+def _extract_specs_via_llm(
+    research: ResearchResult,
+    category_key: str = "dishwasher",
+    product_name: str = "Dishwasher",
+) -> dict | None:
     """Call Groq LLM to extract structured specs from research text with retry on rate limit.
 
     Returns extracted dict on success.
@@ -792,28 +1087,31 @@ def _extract_specs_via_llm(research: ResearchResult) -> dict | None:
     # Build combined research text from top 3 sources with smart content windowing
     parts = []
     if research.raw_answer:
-        parts.append(f"Summary: {research.raw_answer[:1500]}")
+        parts.append(f"Summary: {research.raw_answer[:1000]}")
     for source in sorted_sources:
         raw_content = source.get("content", "")
         content_snippet = _clean_source_content(raw_content, research.mpn, research.brand)
         url = source.get('url', '')
         parts.append(f"\nSource: {url}\n{content_snippet}")
-
-        # Debug: show first 200 chars of what we're sending to LLM
-        print(f"    [DEBUG LLM input] {research.mpn} | {url[:60]}... | first 200 chars: {content_snippet[:200]!r}")
-    research_text = "\n".join(parts)
+    research_text = "\n".join(parts)[:14000]
 
     messages = _build_extraction_messages(
-        research_text, research.mpn, research.brand
+        research_text,
+        research.mpn,
+        research.brand,
+        category_key=category_key,
+        product_name=product_name,
     )
 
     client = Groq(api_key=api_key)
+    models_to_try = ["openai/gpt-oss-120b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
     max_retries = 2
 
     for attempt in range(max_retries + 1):
+        model_name = models_to_try[min(attempt, len(models_to_try) - 1)]
         try:
             response = client.chat.completions.create(
-                model="openai/gpt-oss-120b",
+                model=model_name,
                 messages=messages,
                 response_format={"type": "json_object"},
                 temperature=0,
@@ -840,13 +1138,13 @@ def _extract_specs_via_llm(research: ResearchResult) -> dict | None:
                 # Try to extract retry-after from error string if present
                 wait_match = re.search(r"try again in (\d+(\.\d+)?)s", str(exc), re.IGNORECASE)
                 if wait_match:
-                    wait_secs = int(float(wait_match.group(1))) + 5
+                    wait_secs = int(float(wait_match.group(1))) + 2
                 else:
-                    wait_secs = 65
+                    wait_secs = 5
                 print(
-                    f"  ⏳ Rate limit hit for {research.mpn} "
+                    f"  [PAUSE] Rate limit hit for {research.mpn} "
                     f"(attempt {attempt + 1}/{max_retries + 1}). "
-                    f"Waiting {wait_secs}s before retry..."
+                    f"Switching model/waiting {wait_secs}s before retry..."
                 )
                 time.sleep(wait_secs)
                 continue
@@ -921,49 +1219,60 @@ def _build_mobile_desc(specs: dict, mpn: str, product_name: str = "Dishwasher") 
     return result
 
 
-def _build_invoice_desc(specs: dict, product_name: str = "DISHWASHER") -> str:
+def _build_invoice_desc(
+    specs: dict,
+    category_profile: dict | None = None,
+    product_name: str = "DISHWASHER",
+) -> str:
     """Build INVOICE_DESC via priority-based variable-length join. <=40 chars, ALL CAPS.
 
-    Greedily adds specs in priority order; skips any that would push past 40 chars.
+    Category-aware candidate selection:
+      - For dishwashers: preserves exact baseline priority [mounting_type, wash_cycles, material, color, voltage, amperage, depth_with_door_open, sound_level]
+      - For other categories: uses category-specific priority keys
+      - Truncation guard: skips any value > 15 chars if not in INVOICE_ABBREV rather than truncating into garbage.
     """
     lead_word = (product_name or "ITEM").upper().split()[0]
     parts: list[str] = [lead_word]
-
-    # Build candidate list in priority order
     candidates: list[str] = []
 
-    mounting = specs.get("mounting_type", "")
-    if mounting:
-        candidates.append(INVOICE_ABBREV.get(mounting, mounting.upper()[:5]))
+    profile = category_profile or TAXONOMY_CATALOG.get("dishwasher", {})
+    priority_keys = profile.get(
+        "invoice_priority",
+        ["mounting_type", "wash_cycles", "material", "color", "voltage", "amperage", "depth_with_door_open", "sound_level"],
+    )
 
-    wash_cycles = specs.get("wash_cycles", "")
-    if wash_cycles:
-        candidates.append(str(wash_cycles))
+    for key in priority_keys:
+        raw_val = specs.get(key, "")
+        if not raw_val or not str(raw_val).strip():
+            continue
+        val_str = str(raw_val).strip()
 
-    material = specs.get("material", "")
-    if material:
-        candidates.append(INVOICE_ABBREV.get(material, material.upper()[:3]))
+        # Handle specific known keys with units/formatting
+        if key == "voltage":
+            cand = f"{val_str}V"
+        elif key == "amperage":
+            cand = f"{val_str}A"
+        elif key == "sound_level":
+            cand = f"{val_str}DBA"
+        elif key == "depth_with_door_open":
+            depth = format_decimal_to_fraction(val_str)
+            cand = f"{depth}IN".replace(" ", "") if depth else ""
+        elif key == "flow_rate":
+            cand = f"{val_str}GPM" if "gpm" not in val_str.lower() else val_str.upper().replace(" ", "")
+        elif key in ("wash_cycles", "number_of_poles", "number_of_handles", "faucet_holes", "burners"):
+            cand = str(val_str)
+        else:
+            # Check abbreviation map
+            if val_str in INVOICE_ABBREV:
+                cand = INVOICE_ABBREV[val_str]
+            elif len(val_str) > 15:
+                # Truncation guard: Skip long sentences/descriptions (>15 chars) entirely
+                continue
+            else:
+                cand = val_str.upper()
 
-    color = specs.get("color", "")
-    if color:
-        candidates.append(INVOICE_ABBREV.get(color, color.upper()[:3]))
-
-    voltage = specs.get("voltage", "")
-    if voltage:
-        candidates.append(f"{voltage}V")
-
-    amperage = specs.get("amperage", "")
-    if amperage:
-        candidates.append(f"{amperage}A")
-
-    # Trailing specs - depth and sound level compete for remaining space
-    depth = format_decimal_to_fraction(specs.get("depth_with_door_open", ""))
-    if depth:
-        candidates.append(f"{depth}IN".replace(" ", ""))
-
-    sound_level = specs.get("sound_level", "")
-    if sound_level:
-        candidates.append(f"{sound_level}DBA")
+        if cand and cand not in candidates:
+            candidates.append(cand)
 
     # Greedily add while staying <= 40 chars total
     for candidate in candidates:
@@ -1013,8 +1322,12 @@ def _build_short_desc(specs: dict, mpn: str, product_name: str = "Dishwasher") -
     return opening
 
 
-def _build_long_desc1(specs: dict, product_name: str = "Dishwasher") -> str:
-    """Build LONG_DESC1 by joining attribute values in slot order with formatting."""
+def _build_long_desc1(
+    specs: dict,
+    category_profile: dict | None = None,
+    product_name: str = "Dishwasher",
+) -> str:
+    """Build LONG_DESC1 by joining attribute values in category-specific slot order with formatting."""
     brand = specs.get("brand_name", "")
     with_text = specs.get("with_text", "")
     prod_type = product_name or "Dishwasher"
@@ -1024,27 +1337,63 @@ def _build_long_desc1(specs: dict, product_name: str = "Dishwasher") -> str:
     if _should_include_with_text(with_text):
         opening += f" {with_text}"
 
-    # Build spec parts from attributes in fixed order
+    profile = category_profile or TAXONOMY_CATALOG.get("dishwasher", {})
+    labels = profile.get("labels", ATTRIBUTE_LABELS)
+    spec_keys_map = profile.get("spec_keys", ATTR_TO_SPEC_KEY)
+    uom_keys_map = profile.get("uom_keys", ATTR_UOM_KEYS)
+
     spec_parts: list[str] = []
-    for label in ATTRIBUTE_LABELS:
-        spec_key = ATTR_TO_SPEC_KEY.get(label, "")
+    for label in labels:
+        spec_key = spec_keys_map.get(label)
         if not spec_key:
             continue
         value = specs.get(spec_key, "")
         if not value:
             continue
 
-        uom_key = ATTR_UOM_KEYS.get(label)
+        uom_key = uom_keys_map.get(label)
         uom = specs.get(uom_key, "") if uom_key else ""
 
         formatter = LONG_DESC_FORMATTERS.get(label)
         if formatter and callable(formatter):
             spec_parts.append(formatter(value, uom))
-        else:
+        elif uom:
             spec_parts.append(f"{value} {uom}".strip())
+        else:
+            val_str = str(value).strip()
+            if val_str.lower().endswith("series"):
+                spec_parts.append(val_str)
+            else:
+                spec_parts.append(val_str)
 
     if spec_parts:
         return f"{opening}, {', '.join(spec_parts)}"
+    return opening
+
+
+def _build_retail_desc(specs: dict, product_name: str = "Dishwasher") -> str:
+    """Build RETAIL_DESC: series + type + key specs (no brand, no MPN)."""
+    series = specs.get("series", "")
+    mounting = specs.get("mounting_type", "")
+    wash_cycles = specs.get("wash_cycles", "")
+    material = specs.get("material", "")
+    color = specs.get("color", "")
+    prod_type = product_name or "Dishwasher"
+
+    opening = f"{series} {prod_type}" if series else prod_type
+
+    trailing: list[str] = []
+    if mounting:
+        trailing.append(f"{mounting} Mounting")
+    if wash_cycles:
+        trailing.append(f"{wash_cycles}-Wash Cycle")
+    if material:
+        trailing.append(material)
+    if color:
+        trailing.append(color)
+
+    if trailing:
+        return f"{opening}, {', '.join(trailing)}"
     return opening
 
 
@@ -1114,9 +1463,9 @@ def generate_fields(
     # Detect product category and taxonomy classification
     desc_text = input_row.get("Part_Desc", "")
     category_key = detect_product_category(mpn, desc_text)
-    tax_info = TAXONOMY_CATALOG.get(category_key, TAXONOMY_CATALOG["dishwasher"])
+    tax_info = TAXONOMY_CATALOG.get(category_key, TAXONOMY_CATALOG["unclassified"])
     labels = tax_info.get("labels", ATTRIBUTE_LABELS)
-    product_name = tax_info.get("Product Name", "Dishwasher")
+    product_name = tax_info.get("Product Name", "Product")
 
     # Category constants (taxonomy mapping per Unilog guidelines)
     for col in ["Dept", "Class", "Fine", "Classpath", "Product Name"]:
@@ -1149,7 +1498,11 @@ def generate_fields(
     # Layer 2: LLM extraction
     # -------------------------------------------------------------------
 
-    specs = _extract_specs_via_llm(research_result)
+    specs = _extract_specs_via_llm(
+        research_result,
+        category_key=category_key,
+        product_name=product_name,
+    )
 
     if specs is None:
         # No research or LLM failure → mark everything non-deterministic
@@ -1225,16 +1578,21 @@ def generate_fields(
             needs_review.remove("MANUFACTURER_NAME")
 
     # — Attribute values & UOMs (slots 1-15) —
-    for i, label in enumerate(ATTRIBUTE_LABELS, start=1):
-        spec_key = ATTR_TO_SPEC_KEY[label]
-        value = specs.get(spec_key, "")
+    spec_keys_map = tax_info.get("spec_keys", ATTR_TO_SPEC_KEY)
+    uom_keys_map = tax_info.get("uom_keys", ATTR_UOM_KEYS)
+
+    for i, label in enumerate(labels[:15], start=1):
+        spec_key = spec_keys_map.get(label)
+        value = specs.get(spec_key, "") if spec_key else ""
         if value:
             fields[f"ATTRIBUTE_VALUE {i}"] = str(value)
             field_sources[f"ATTRIBUTE_VALUE {i}"] = _determine_research_provenance(value)
-        elif spec_key in not_found:
+        elif spec_key and spec_key in not_found:
+            needs_review.append(f"ATTRIBUTE_VALUE {i}")
+        else:
             needs_review.append(f"ATTRIBUTE_VALUE {i}")
 
-        uom_key = ATTR_UOM_KEYS.get(label)
+        uom_key = uom_keys_map.get(label)
         if uom_key:
             uom = specs.get(uom_key, "")
             if uom:
@@ -1245,13 +1603,13 @@ def generate_fields(
     fields["MOBILE_DESC"] = _build_mobile_desc(specs, mpn, product_name=product_name)
     field_sources["MOBILE_DESC"] = "derived"
 
-    fields["INVOICE_DESC"] = _build_invoice_desc(specs, product_name=product_name)
+    fields["INVOICE_DESC"] = _build_invoice_desc(specs, category_profile=tax_info, product_name=product_name)
     field_sources["INVOICE_DESC"] = "derived"
 
     fields["SHORT_DESC"] = _build_short_desc(specs, mpn, product_name=product_name)
     field_sources["SHORT_DESC"] = "derived"
 
-    fields["LONG_DESC1"] = _build_long_desc1(specs, product_name=product_name)
+    fields["LONG_DESC1"] = _build_long_desc1(specs, category_profile=tax_info, product_name=product_name)
     field_sources["LONG_DESC1"] = "derived"
 
     fields["RETAIL_DESC"] = _build_retail_desc(specs, product_name=product_name)
@@ -1329,17 +1687,24 @@ def generate_fields(
 
     # Map not_found spec keys back to column names for needs_review
     for spec_field_name in not_found:
-        for label, key in ATTR_TO_SPEC_KEY.items():
+        for label, key in spec_keys_map.items():
             if key == spec_field_name:
-                slot = ATTRIBUTE_LABELS.index(label) + 1
-                col_name = f"ATTRIBUTE_VALUE {slot}"
-                if col_name not in needs_review:
-                    needs_review.append(col_name)
-                break
+                if label in labels:
+                    slot = labels.index(label) + 1
+                    col_name = f"ATTRIBUTE_VALUE {slot}"
+                    if col_name not in needs_review:
+                        needs_review.append(col_name)
+                    break
         else:
             # Non-attribute field (e.g. marketing_description)
             if spec_field_name not in needs_review:
                 needs_review.append(spec_field_name)
+
+    # Force low confidence and unclassified flag if category is unclassified
+    if category_key == "unclassified":
+        confidence = "low"
+        if "category_unmatched" not in needs_review:
+            needs_review.append("category_unmatched")
 
     return GenerationResult(
         mpn=mpn,

@@ -8,7 +8,7 @@ Orchestrates the entire catalog enrichment pipeline across raw input datasets:
   Stage 4: Enterprise Quality Validation & Scoring (validator.py)
 
 Generates:
-  1. output/Unihack_Enriched_Catalog_Delivery.csv (252 static columns, exact delivery format)
+  1. output/EnrichAI_Enriched_Catalog_Delivery.csv (252 static columns, exact delivery format)
   2. output/enrichment_audit_report.json (provenance map, fill rates, confidence metrics)
 
 Includes built-in rate-limit auto-pacer to respect Groq and Tavily free-tier limits.
@@ -28,6 +28,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 
+from brand_resolver import resolve_brand
 from database import get_record, save_record
 from field_generator import _read_column_headers, detect_product_category, generate_fields
 from validator import validate_enriched_record
@@ -59,6 +60,7 @@ def run_pipeline(
     single_mpn: str | None = None,
     pace_seconds: int = 20,
     resume: bool = True,
+    force_refresh: bool = False,
 ) -> dict:
     """Run enterprise-scale, crash-resilient enrichment pipeline on up to 100,000+ rows.
 
@@ -79,7 +81,7 @@ def run_pipeline(
     processed_mpns: set[str] = set()
     file_exists = output_csv.exists() and output_csv.stat().st_size > 0
 
-    if resume and file_exists:
+    if resume and file_exists and not force_refresh:
         try:
             with open(output_csv, "r", encoding="utf-8") as f:
                 r = csv.DictReader(f)
@@ -92,7 +94,7 @@ def run_pipeline(
             print(f"  [Checkpoint] Warning: Could not read existing output: {e}")
 
     # Open output CSV in append mode if resuming, else write mode
-    write_mode = "a" if (resume and file_exists and processed_mpns) else "w"
+    write_mode = "a" if (resume and file_exists and processed_mpns and not force_refresh) else "w"
     csv_file = open(output_csv, write_mode, encoding="utf-8", newline="")
     csv_writer = csv.DictWriter(csv_file, fieldnames=headers)
     
@@ -104,11 +106,11 @@ def run_pipeline(
     all_candidate_rows = iter_input_rows(input_csv, category_filter=category if category != "all" else "")
     
     print("=" * 80)
-    print(f"[START] UNIHACK 100K-SCALE RESILIENT ENRICHMENT ENGINE")
+    print(f"[START] ENRICH AI 100K-SCALE RESILIENT ENRICHMENT ENGINE")
     print(f"   Target category:        {category or 'All'}")
     print(f"   Delivery format schema: 252 static columns")
     print(f"   Streaming mode:         Active (Memory-Safe O(1))")
-    print(f"   Database cache:         Active (Supabase / SQLite)")
+    print(f"   Database cache:         {'Bypassed (Force Refresh)' if force_refresh else 'Active (Supabase / SQLite)'}")
     print("=" * 80 + "\n")
 
     audit_reports: list[dict] = []
@@ -124,7 +126,7 @@ def run_pipeline(
             if single_mpn and mpn_upper != single_mpn.strip().upper():
                 continue
 
-            if resume and mpn_upper in processed_mpns:
+            if resume and mpn_upper in processed_mpns and not force_refresh:
                 continue
 
             processed_count += 1
@@ -134,7 +136,7 @@ def run_pipeline(
             print(f"[{processed_count}] Processing MPN: {mpn} ('{desc}')")
 
             # Check database cache for instant hit
-            cached_data = get_record(mpn)
+            cached_data = get_record(mpn) if not force_refresh else None
             if cached_data and cached_data.get("fields"):
                 print(f"  [DB Cache Hit] Instant 0ms lookup for {mpn}")
                 gen_fields = cached_data["fields"]
@@ -265,11 +267,12 @@ def run_pipeline(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="UniHack Catalog Enrichment Pipeline Runner")
+    parser = argparse.ArgumentParser(description="Enrich AI Catalog Enrichment Pipeline Runner")
     parser.add_argument("--limit", type=int, default=10, help="Number of rows to process")
     parser.add_argument("--category", type=str, default="dishwasher", help="Filter by product category")
     parser.add_argument("--mpn", type=str, default=None, help="Process single MPN")
     parser.add_argument("--pace", type=int, default=15, help="Pacing sleep in seconds between live calls")
+    parser.add_argument("--force-refresh", action="store_true", help="Bypass cache and force fresh live research")
     parser.add_argument(
         "--input-csv",
         type=Path,
@@ -278,7 +281,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output-csv",
         type=Path,
-        default=Path(__file__).parent.parent / "output" / "Unihack_Enriched_Catalog_Delivery.csv",
+        default=Path(__file__).parent.parent / "output" / "EnrichAI_Enriched_Catalog_Delivery.csv",
     )
     parser.add_argument(
         "--output-audit",
@@ -295,4 +298,5 @@ if __name__ == "__main__":
         category=args.category,
         single_mpn=args.mpn,
         pace_seconds=args.pace,
+        force_refresh=args.force_refresh,
     )

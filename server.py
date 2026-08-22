@@ -1,5 +1,5 @@
 """
-UniHack Enterprise Backend API Server (FastAPI on Render / Local)
+Enrich AI Enterprise Backend API Server (FastAPI on Render / Local)
 ------------------------------------------------------------------
 Serves REST APIs for product catalog enrichment, caching, and export.
 Includes CORS middleware for seamless Vercel frontend integration.
@@ -27,18 +27,18 @@ from pydantic import BaseModel
 # Add src to Python path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from brand_resolver import resolve_brand
-from database import get_all_records, get_record, save_record
-from field_generator import _read_column_headers, detect_product_category, generate_fields
-from pipeline_runner import load_input_rows
-from validator import validate_enriched_record
-from web_research import BRAND_OFFICIAL_DOMAINS, ResearchResult, research_product
+from src.brand_resolver import resolve_brand
+from src.database import get_all_records, get_record, save_record
+from src.field_generator import _read_column_headers, detect_product_category, generate_fields
+from src.pipeline_runner import load_input_rows
+from src.validator import validate_enriched_record
+from src.web_research import BRAND_OFFICIAL_DOMAINS, ResearchResult, research_product
 
 load_dotenv()
 
 app = FastAPI(
-    title="UniHack Catalog Enrichment API",
-    description="Enterprise AI-Powered Product Catalog Enrichment Engine",
+    title="Enrich AI Catalog Enrichment API",
+    description="Enrich AI — Autonomous Enterprise Product Catalog Enrichment Engine",
     version="1.0.0",
 )
 
@@ -76,7 +76,7 @@ def health_check():
 
     return {
         "status": "healthy",
-        "engine": "UniHack 2026 Enterprise Enrichment Engine",
+        "engine": "Enrich AI Enterprise Catalog Enrichment Engine",
         "groq_api": "connected" if groq_configured else "missing_key",
         "tavily_api": "connected" if tavily_configured else "missing_key",
         "database": "Supabase PostgreSQL" if supabase_configured else "SQLite Local Fallback",
@@ -185,17 +185,15 @@ def enrich_product(req: EnrichRequest):
 # Batch CSV Upload Endpoint (SSE Progress Streaming)
 # ---------------------------------------------------------------------------
 
-MAX_BATCH_ROWS = 20
-BATCH_PACE_SECONDS = 20
+BATCH_PACE_SECONDS = 5
 
 
 @app.post("/api/enrich-batch")
 async def enrich_batch(file: UploadFile = File(...)):
     """Enrich a CSV batch upload with real-time SSE progress streaming.
 
-    Processes rows sequentially with pacing to respect Groq TPM limits.
+    Processes rows sequentially with database caching and adaptive pacing.
     Accepts CSV with columns: Mfg_Part_Num, Part_Desc, Part_Manuf (optional).
-    Capped at MAX_BATCH_ROWS rows for demo safety.
     """
     import asyncio
 
@@ -223,20 +221,14 @@ async def enrich_batch(file: UploadFile = File(...)):
             detail=f"CSV must contain columns: {', '.join(sorted(required_cols))}. Found: {', '.join(reader.fieldnames or [])}",
         )
 
-    if len(rows) > MAX_BATCH_ROWS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"CSV contains {len(rows)} rows, but the demo limit is {MAX_BATCH_ROWS} rows. Please reduce the file size.",
-        )
-
-    # Stream progress via SSE (Server-Sent Events)
+    # Stream progress via SSE (Server-Sent Events) with zero row limit constraint
     async def generate_sse():
         results = []
         total = len(rows)
 
         for idx, row in enumerate(rows, start=1):
             mpn = row.get("Mfg_Part_Num", "").strip()
-            desc = row.get("Part_Desc", "").strip() or f"{mpn} Dishwasher"
+            desc = row.get("Part_Desc", "").strip() or f"{mpn} Product"
             distributor = row.get("Part_Manuf", "").strip() or "Appliance Dealers Cooperative (APPDE)"
 
             if not mpn:
@@ -260,51 +252,75 @@ async def enrich_batch(file: UploadFile = File(...)):
             })
             yield f"data: {progress_event}\n\n"
 
-            # Run the enrichment pipeline (same stages as /api/enrich)
+            is_cache_hit = False
             try:
-                raw_row_data = {"Mfg_Part_Num": mpn, "Part_Desc": desc, "Part_Manuf": distributor}
-                brand_res = resolve_brand(mpn, desc, raw_row=raw_row_data)
-                category_key = detect_product_category(mpn, desc)
-
-                if brand_res.brand:
-                    research_res = research_product(mpn, brand_res.brand, product_type=category_key)
+                # 1. Check persistent database cache first (instant hit)
+                cached_data = get_record(mpn)
+                if cached_data and cached_data.get("fields") and cached_data.get("validation", {}).get("confidence") in ("HIGH", "MEDIUM"):
+                    is_cache_hit = True
+                    val_data = cached_data.get("validation", {})
+                    sources = cached_data.get("sources", [])
+                    result = {
+                        "mpn": mpn,
+                        "resolved_brand": cached_data.get("brand", "Unknown"),
+                        "brand_confidence": "high",
+                        "research_status": "cached (official OEM)",
+                        "sources_count": len(sources),
+                        "confidence": val_data.get("confidence", "HIGH"),
+                        "confidence_score": val_data.get("confidence_score", 0.85),
+                        "is_valid": val_data.get("is_valid", True),
+                        "needs_review_fields_count": len(val_data.get("needs_review_fields", [])),
+                        "status": "success",
+                    }
                 else:
-                    research_res = ResearchResult(
-                        mpn=mpn, brand="", status="not_found", raw_answer="Brand unresolved"
-                    )
+                    # 2. Stage 1: Brand Resolution & Category Detection
+                    raw_row_data = {"Mfg_Part_Num": mpn, "Part_Desc": desc, "Part_Manuf": distributor}
+                    brand_res = resolve_brand(mpn, desc, raw_row=raw_row_data)
+                    category_key = detect_product_category(mpn, desc)
 
-                input_row = {
-                    "Mfg_Part_Num": mpn,
-                    "Part_Desc": desc,
-                    "Part_Manuf": distributor,
-                }
-                gen_res = generate_fields(brand_res, research_res, input_row)
-                val_summary = validate_enriched_record(gen_res, brand_res, research_res)
+                    # 3. Stage 2: Web & Technical PDF Research (with Retry & Anti-Throttling)
+                    if brand_res.brand:
+                        research_res = research_product(mpn, brand_res.brand, product_type=category_key)
+                    else:
+                        research_res = ResearchResult(
+                            mpn=mpn, brand="", status="not_found", raw_answer="Brand unresolved"
+                        )
 
-                val_dict = {
-                    "is_valid": val_summary.is_valid,
-                    "confidence": val_summary.confidence,
-                    "confidence_score": val_summary.confidence_score,
-                    "score_breakdown": val_summary.score_breakdown,
-                    "issues": [asdict(i) for i in val_summary.issues],
-                    "needs_review_fields": val_summary.needs_review,
-                }
+                    # 4. Stage 3: 252-Column Field Generation
+                    input_row = {
+                        "Mfg_Part_Num": mpn,
+                        "Part_Desc": desc,
+                        "Part_Manuf": distributor,
+                    }
+                    gen_res = generate_fields(brand_res, research_res, input_row)
 
-                sources_list = [s["url"] for s in research_res.sources]
-                save_record(mpn, brand_res.brand or "Unknown", gen_res.fields, sources_list, val_dict)
+                    # 5. Stage 4: Enterprise PIM Validation & 5-Factor Scoring
+                    val_summary = validate_enriched_record(gen_res, brand_res, research_res)
 
-                result = {
-                    "mpn": mpn,
-                    "resolved_brand": brand_res.brand or "Unknown",
-                    "brand_confidence": brand_res.confidence,
-                    "research_status": research_res.status,
-                    "sources_count": len(sources_list),
-                    "confidence": val_summary.confidence,
-                    "confidence_score": val_summary.confidence_score,
-                    "is_valid": val_summary.is_valid,
-                    "needs_review_fields_count": len(val_summary.needs_review),
-                    "status": "success",
-                }
+                    val_dict = {
+                        "is_valid": val_summary.is_valid,
+                        "confidence": val_summary.confidence,
+                        "confidence_score": val_summary.confidence_score,
+                        "score_breakdown": val_summary.score_breakdown,
+                        "issues": [asdict(i) for i in val_summary.issues],
+                        "needs_review_fields": val_summary.needs_review,
+                    }
+
+                    sources_list = [s["url"] for s in research_res.sources]
+                    save_record(mpn, brand_res.brand or "Unknown", gen_res.fields, sources_list, val_dict)
+
+                    result = {
+                        "mpn": mpn,
+                        "resolved_brand": brand_res.brand or "Unknown",
+                        "brand_confidence": brand_res.confidence,
+                        "research_status": research_res.status,
+                        "sources_count": len(sources_list),
+                        "confidence": val_summary.confidence,
+                        "confidence_score": val_summary.confidence_score,
+                        "is_valid": val_summary.is_valid,
+                        "needs_review_fields_count": len(val_summary.needs_review),
+                        "status": "success",
+                    }
             except Exception as exc:
                 result = {
                     "mpn": mpn,
@@ -325,8 +341,8 @@ async def enrich_batch(file: UploadFile = File(...)):
             row_event = json.dumps({"type": "row_complete", "current": idx, "total": total, "result": result})
             yield f"data: {row_event}\n\n"
 
-            # Pacing between rows to respect Groq TPM limits
-            if idx < total:
+            # Adaptive pacing: Pace only when live external research was performed
+            if idx < total and not is_cache_hit:
                 pace_event = json.dumps({
                     "type": "pacing",
                     "current": idx,
@@ -351,7 +367,7 @@ async def enrich_batch(file: UploadFile = File(...)):
     )
 
 
-from exporters import export_to_grainger, export_to_json_pim, export_to_shopify, export_to_unilog
+from src.exporters import export_to_grainger, export_to_json_pim, export_to_shopify, export_to_unilog
 
 
 class CuratorOverrideRequest(BaseModel):
@@ -404,7 +420,7 @@ def export_catalog_formatted(export_format: str):
 
     if fmt in ("unilog", "csv", "252"):
         csv_content = export_to_unilog(records, headers)
-        filename = "Unihack_Master_252Col_Delivery.csv"
+        filename = "EnrichAI_Master_252Col_Delivery.csv"
         media_type = "text/csv"
     elif fmt in ("grainger", "b2b"):
         csv_content = export_to_grainger(records)
@@ -494,5 +510,5 @@ if PUBLIC_DIR.exists():
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", "8000"))
-    print(f"\n[*] Starting UniHack Catalog Enrichment Server on http://localhost:{port}\n")
+    print(f"\n[*] Starting Enrich AI Catalog Enrichment Server on http://localhost:{port}\n")
     uvicorn.run("server:app", host="0.0.0.0", port=port, reload=True)

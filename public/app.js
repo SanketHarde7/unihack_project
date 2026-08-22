@@ -1,5 +1,5 @@
 /**
- * UniHack EnrichAI — Frontend Application Controller
+ * Enrich AI — Frontend Application Controller
  * Handles live 5-stage stepper animations, interactive tab switching,
  * circular progress gauge rendering, and 252-column master data table updates.
  */
@@ -847,7 +847,7 @@ if (drawerCuratorForm) {
       const res = await fetch(`${API_BASE}/api/curator/override`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: json.stringify({
+        body: JSON.stringify({
           mpn: activeCuratorMpn,
           fields: updatedFields,
           approved: true,

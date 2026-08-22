@@ -266,6 +266,14 @@ def validate_enriched_record(
     else:
         confidence = "LOW"
 
+    # Category unclassified guard: force LOW confidence and ensure category_unmatched in needs_review
+    if fields.get("Dept") == "Uncategorized" or fields.get("Class") == "Pending Classification" or "category_unmatched" in needs_review:
+        confidence = "LOW"
+        confidence_score = min(confidence_score, 0.20)
+        if "category_unmatched" not in needs_review:
+            needs_review.append("category_unmatched")
+        issues.append(ValidationIssue("Classpath", "warning", "Product category is unclassified / pending classification", "RULE_CAT_UNMATCHED"))
+
     # A record is valid if it has zero critical errors
     has_critical_errors = any(i.issue_type == "error" for i in issues)
     is_valid = not has_critical_errors

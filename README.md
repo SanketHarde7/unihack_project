@@ -1,4 +1,4 @@
-# 🏆 UniHack EnrichAI — Autonomous Enterprise Product Catalog Enrichment Engine
+# 🏆 Enrich AI — Autonomous Enterprise Product Catalog Enrichment Engine
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -8,7 +8,6 @@
 [![Schema 252 Columns](https://img.shields.io/badge/Schema-252%20Static%20Columns-blueviolet.svg)](#-252-column-delivery-format-compliance)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **UniHack 2026 Submission**  
 > An autonomous, enterprise-grade catalog enrichment and PIM validation engine that transforms messy, unbranded distributor feeds into verified, **252-column commerce-ready product master records** with **zero hallucination**, **domain-level provenance**, and **explainable confidence scoring**.
 
 ---
@@ -193,7 +192,7 @@ Tested on [data/supervisor_challenge_dataset.csv](file:///c:/Users/sanke/OneDriv
 
 ### 2. Dishwasher 10-Item Baseline Verification
 
-Tested on [data/Unihack__Sample_Dataset_-_Input.csv](file:///c:/Users/sanke/OneDrive/Desktop/unihack/data/Unihack__Sample_Dataset_-_Input.csv):
+Tested on the 10-item baseline dishwasher dataset:
 - **10/10 Products Successfully Enriched (100% Valid Schema)**
 - **0 Schema Violations / 0 False Truncations**
 - **Detailed Invoice Formats Preserved:** `KDTS324SPS` ➔ `DISHWASHER 5 SST 41DBA`, `KDPS624SJP` ➔ `DISHWASHER 5 44DBA`.
@@ -317,7 +316,6 @@ python src/pipeline_runner.py --input-csv data/custom_feed.csv --force-refresh
 
 ## 👥 Team & Submission Information
 
-- **Event:** UniHack 2026
-- **Project:** EnrichAI — Autonomous Enterprise Product Catalog Enrichment Engine
+- **Project:** Enrich AI — Autonomous Enterprise Product Catalog Enrichment Engine
 - **Lead Developer:** Sanket Harde ([@SanketHarde7](https://github.com/SanketHarde7))
 - **License:** MIT License
