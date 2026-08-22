@@ -477,9 +477,11 @@ window.addEventListener("DOMContentLoaded", () => {
   const batchResultsCard = document.getElementById("batch-results-card");
   const batchResultsBody = document.getElementById("batch-results-body");
   const batchResultsSummary = document.getElementById("batch-results-summary");
+  const downloadBatchCsvBtn = document.getElementById("download-batch-csv-btn");
 
   let selectedFile = null;
   let parsedRowCount = 0;
+  let lastBatchMpns = []; // Track MPNs from the last completed batch
 
   // --- File Selection ---
   function handleFileSelect(file) {
@@ -495,54 +497,42 @@ window.addEventListener("DOMContentLoaded", () => {
       const text = e.target.result;
       const lines = text.trim().split("\n").filter((l) => l.trim());
       parsedRowCount = Math.max(0, lines.length - 1); // subtract header row
-
       selectedFileName.textContent = file.name;
-      selectedFileRows.textContent = `${parsedRowCount} row${parsedRowCount !== 1 ? "s" : ""}`;
+      selectedFileRows.textContent = `${parsedRowCount} rows detected`;
       selectedFileInfo.classList.remove("hidden");
-      batchEnrichBtn.disabled = parsedRowCount === 0;
+      batchEnrichBtn.disabled = false;
     };
     reader.readAsText(file);
   }
 
-  batchFileInput.addEventListener("change", (e) => {
-    if (e.target.files.length > 0) {
-      handleFileSelect(e.target.files[0]);
-    }
-  });
-
   // Drag & Drop
-  batchDropZone.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    batchDropZone.classList.add("drag-over");
-  });
-
-  batchDropZone.addEventListener("dragleave", () => {
-    batchDropZone.classList.remove("drag-over");
-  });
-
-  batchDropZone.addEventListener("drop", (e) => {
-    e.preventDefault();
-    batchDropZone.classList.remove("drag-over");
-    if (e.dataTransfer.files.length > 0) {
-      handleFileSelect(e.dataTransfer.files[0]);
-      // Also set the input so the form data reads it
-      const dt = new DataTransfer();
-      dt.items.add(e.dataTransfer.files[0]);
-      batchFileInput.files = dt.files;
-    }
-  });
+  if (batchDropZone) {
+    batchDropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      batchDropZone.classList.add("drag-over");
+    });
+    batchDropZone.addEventListener("dragleave", () => batchDropZone.classList.remove("drag-over"));
+    batchDropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      batchDropZone.classList.remove("drag-over");
+      if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files[0]);
+    });
+    batchDropZone.addEventListener("click", () => batchFileInput && batchFileInput.click());
+  }
+  if (batchFileInput) batchFileInput.addEventListener("change", () => handleFileSelect(batchFileInput.files[0]));
 
   // Clear file
-  clearFileBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    selectedFile = null;
-    parsedRowCount = 0;
-    batchFileInput.value = "";
-    selectedFileInfo.classList.add("hidden");
-    batchEnrichBtn.disabled = true;
-  });
+  if (clearFileBtn) {
+    clearFileBtn.addEventListener("click", () => {
+      selectedFile = null;
+      parsedRowCount = 0;
+      selectedFileInfo.classList.add("hidden");
+      batchEnrichBtn.disabled = true;
+      if (batchFileInput) batchFileInput.value = "";
+    });
+  }
 
-  // --- Batch Enrichment via SSE ---
+  // --- Batch Enrich ---
   batchEnrichBtn.addEventListener("click", async () => {
     if (!selectedFile) {
       alert("Please select a CSV file first.");
@@ -562,6 +552,8 @@ window.addEventListener("DOMContentLoaded", () => {
     batchResultsCard.classList.add("hidden");
     batchResultsBody.innerHTML = "";
     batchResultsSummary.innerHTML = "";
+    if (downloadBatchCsvBtn) downloadBatchCsvBtn.classList.add("hidden");
+    lastBatchMpns = [];
 
     try {
       const formData = new FormData();
@@ -619,6 +611,7 @@ window.addEventListener("DOMContentLoaded", () => {
               batchProgressCount.textContent = `${completedRows} / ${eventData.total}`;
 
               allResults.push(eventData.result);
+              if (eventData.result.mpn) lastBatchMpns.push(eventData.result.mpn);
               appendBatchResultRow(completedRows, eventData.result);
               batchResultsCard.classList.remove("hidden");
             }
@@ -628,6 +621,11 @@ window.addEventListener("DOMContentLoaded", () => {
               batchProgressFill.style.width = "100%";
               batchProgress.classList.remove("active");
               renderBatchSummary(allResults);
+
+              // Show "Download Batch CSV" button
+              if (downloadBatchCsvBtn && lastBatchMpns.length > 0) {
+                downloadBatchCsvBtn.classList.remove("hidden");
+              }
             }
           } catch (parseErr) {
             // Skip malformed events
@@ -644,6 +642,51 @@ window.addEventListener("DOMContentLoaded", () => {
       batchProgress.classList.remove("active");
     }
   });
+
+  // --- Download Batch CSV (252-Column) ---
+  if (downloadBatchCsvBtn) {
+    downloadBatchCsvBtn.addEventListener("click", async () => {
+      if (lastBatchMpns.length === 0) {
+        alert("No batch results to download. Please run a batch enrichment first.");
+        return;
+      }
+
+      downloadBatchCsvBtn.disabled = true;
+      const originalHTML = downloadBatchCsvBtn.innerHTML;
+      downloadBatchCsvBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Generating CSV...`;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/batch-export`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mpns: lastBatchMpns, format: "unilog" }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || "Export failed");
+        }
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "EnrichAI_Batch_252Col_Delivery.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+
+        downloadBatchCsvBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Downloaded!`;
+        setTimeout(() => {
+          downloadBatchCsvBtn.innerHTML = originalHTML;
+          downloadBatchCsvBtn.disabled = false;
+        }, 2000);
+      } catch (err) {
+        alert(`Download error: ${err.message}`);
+        downloadBatchCsvBtn.innerHTML = originalHTML;
+        downloadBatchCsvBtn.disabled = false;
+      }
+    });
+  }
 
   // --- Render batch result rows incrementally ---
   function appendBatchResultRow(idx, result) {

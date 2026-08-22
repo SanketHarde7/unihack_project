@@ -467,6 +467,60 @@ def export_catalog_formatted(export_format: str = "unilog"):
     )
 
 
+class BatchExportRequest(BaseModel):
+    mpns: list[str]
+    format: str = "unilog"
+
+
+@app.post("/api/batch-export")
+def batch_export_csv(req: BatchExportRequest):
+    """Export enriched 252-column CSV for a specific set of MPNs (used after batch upload).
+
+    Accepts a JSON body: {"mpns": ["K-596-CP", "HOM250", ...], "format": "unilog"}
+    Returns a downloadable CSV file containing only the requested MPNs.
+    """
+    headers_list = _read_column_headers()
+    records = []
+    for mpn in req.mpns:
+        rec = get_record(mpn)
+        if rec:
+            records.append(rec)
+
+    if not records:
+        raise HTTPException(status_code=404, detail="No enriched records found for the provided MPNs.")
+
+    fmt = req.format.lower().strip()
+
+    if fmt in ("unilog", "csv", "252", "master"):
+        csv_content = "\ufeff" + export_to_unilog(records, headers_list)
+        filename = "EnrichAI_Batch_252Col_Delivery.csv"
+        media_type = "text/csv; charset=utf-8"
+    elif fmt in ("grainger", "b2b"):
+        csv_content = "\ufeff" + export_to_grainger(records)
+        filename = "EnrichAI_Batch_Grainger_B2B.csv"
+        media_type = "text/csv; charset=utf-8"
+    elif fmt in ("shopify", "ecommerce"):
+        csv_content = "\ufeff" + export_to_shopify(records)
+        filename = "EnrichAI_Batch_Shopify.csv"
+        media_type = "text/csv; charset=utf-8"
+    elif fmt in ("json", "pim"):
+        json_content = export_to_json_pim(records)
+        return Response(
+            content=json_content,
+            media_type="application/json; charset=utf-8",
+            headers={"Content-Disposition": f"attachment; filename=EnrichAI_Batch_PIM.json"},
+        )
+    else:
+        csv_content = "\ufeff" + export_to_unilog(records, headers_list)
+        filename = "EnrichAI_Batch_252Col_Delivery.csv"
+        media_type = "text/csv; charset=utf-8"
+
+    return StreamingResponse(
+        iter([csv_content]),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
 @app.get("/api/metrics")
 def get_catalog_metrics():
     """Return executive ROI, data completeness, and compliance metrics."""

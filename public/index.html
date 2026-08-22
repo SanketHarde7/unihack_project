@@ -432,8 +432,13 @@
               <i class="fa-solid fa-list-check text-accent"></i>
               <h3>Batch Enrichment Results (Click Any Row to Inspect/Curate)</h3>
             </div>
-            <div class="batch-results-summary" id="batch-results-summary">
-              <!-- Populated by JS -->
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <div class="batch-results-summary" id="batch-results-summary">
+                <!-- Populated by JS -->
+              </div>
+              <button id="download-batch-csv-btn" class="primary-btn-sm hidden" style="white-space: nowrap;">
+                <i class="fa-solid fa-file-csv"></i> Download Batch CSV (252 Columns)
+              </button>
             </div>
           </div>
           <div class="table-responsive">
@@ -513,6 +518,6 @@
     </div>
   </aside>
 
-  <script src="app.js?v=3.0"></script>
+  <script src="app.js?v=4.0"></script>
 </body>
 </html>
